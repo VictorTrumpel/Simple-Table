@@ -1,28 +1,18 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'users' })
-export class User {
+@Entity({ name: 'databases' })
+export class Database {
   @PrimaryGeneratedColumn()
   id!: number;
 
   @Column({ type: 'text' })
   name!: string;
-
-  @Column({ type: 'text', unique: true })
-  email!: string;
-
-  @Column({
-    name: 'password_hash',
-    type: 'text',
-    select: false,
-  })
-  passwordHash!: string;
 
   @CreateDateColumn({
     name: 'created_at',
@@ -30,9 +20,9 @@ export class User {
   })
   createdAt!: Date;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
+  @DeleteDateColumn({
+    name: 'deleted_at',
     type: 'timestamptz',
   })
-  updatedAt!: Date;
+  deletedAt!: Date;
 }

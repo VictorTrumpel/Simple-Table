@@ -1,7 +1,7 @@
-import { userService, network } from "@shared/network";
-import { useAppDispatch, userInfoActions } from "@shared/model";
-import type { CreateUserDTO } from "@shared/network";
-import type { GetUserDTO } from "src/shared/network/dto/GetUserDTO";
+import { userService, network } from '@shared/network';
+import { useAppDispatch, userInfoActions } from '@shared/model';
+import type { CreateUserDTO } from '@shared/network';
+import type { GetUserDTO } from 'src/shared/network/dto/GetUserDTO';
 
 export const useViewModel = () => {
   const dispatch = useAppDispatch();
@@ -11,9 +11,8 @@ export const useViewModel = () => {
   };
 
   const setUserInfo = (getUserDTO: GetUserDTO) => {
-    console.log("getUserDTO :>> ", getUserDTO);
-    localStorage.setItem("authToken", getUserDTO.token);
-    network.defaults.headers.common.Authorization = getUserDTO.token;
+    localStorage.setItem('authToken', getUserDTO.token);
+    network.defaults.headers.common.Authorization = `Bearer ${getUserDTO.token}`;
     dispatch(userInfoActions.setUserInfo(getUserDTO.userInfo));
   };
 

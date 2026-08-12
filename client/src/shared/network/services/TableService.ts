@@ -55,7 +55,7 @@ class TableService {
     try {
       const { data } = await network.post(`/tables/create`, {
         name: tableName,
-        database_id: dbId,
+        databaseId: dbId,
         columns: [],
       });
 

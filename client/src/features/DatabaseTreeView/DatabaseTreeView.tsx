@@ -17,6 +17,8 @@ export const DatabaseTreeView = () => {
 
   const [tree, setTree] = useState<GetTreeDatabaseDTO[] | null>(null);
 
+  console.log('tree :>> ', tree);
+
   const handleUpdateTree = async () => {
     const response = await getTree();
     setTree(response.data);

@@ -11,13 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import argon2 from 'argon2';
 
-type UserEntity = {
-  id: number;
-  email: string;
-  name: string;
-  passwordHash: string;
-};
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -81,5 +74,9 @@ export class AuthService {
     await this.userRepository.save(user);
 
     return await this.loginUser({ email, password });
+  }
+
+  async getUserById(userId: number) {
+    return this.userRepository.findBy({ id: userId });
   }
 }

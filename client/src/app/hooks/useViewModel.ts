@@ -1,7 +1,7 @@
-import { userService, network } from "@shared/network";
-import { userInfoActions } from "@shared/model";
-import { useAppDispatch } from "@shared/model";
-import { useAppSelector } from "@shared/model";
+import { userService, network } from '@shared/network';
+import { userInfoActions } from '@shared/model';
+import { useAppDispatch } from '@shared/model';
+import { useAppSelector } from '@shared/model';
 
 export const useViewModel = () => {
   const dispatch = useAppDispatch();
@@ -9,16 +9,16 @@ export const useViewModel = () => {
   const user = useAppSelector((state) => state.userInfo.user);
 
   const authUser = async () => {
-    const savedAuthToken = localStorage.getItem("authToken");
+    const savedAuthToken = localStorage.getItem('authToken');
 
     if (!savedAuthToken) return null;
 
-    network.defaults.headers.common.Authorization = savedAuthToken;
+    network.defaults.headers.common.Authorization = `Bearer ${savedAuthToken}`;
 
     const response = await userService.getUserInfo();
 
     if (response.error || response.data === null) {
-      localStorage.removeItem("authToken");
+      localStorage.removeItem('authToken');
       network.defaults.headers.common.Authorization = undefined;
       return;
     }

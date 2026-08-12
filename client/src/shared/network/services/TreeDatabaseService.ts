@@ -6,6 +6,11 @@ import type { AxiosError } from 'axios';
 class TreeDatabaseService {
   async getTree(): Promise<Response<GetTreeDatabaseDTO[]>> {
     try {
+      console.log(
+        'network.defaults.headers.common.Authorization :>> ',
+        network.defaults.headers.common.Authorization,
+      );
+      // console.log('network');
       const { data } = await network.get('/databases/list');
       return { data, error: null };
     } catch (error) {

@@ -31,7 +31,7 @@ export class UserService {
 
   async getUserInfo() {
     try {
-      const { data } = await network.get<GetUserDTO['userInfo']>('/users/info');
+      const { data } = await network.get<GetUserDTO['userInfo']>('/auth/info');
 
       return { data: camelcaseKeys(data), error: null };
     } catch (error) {
