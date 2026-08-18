@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto';
 import { AddColumnDto } from './dto/AddColumnDto';
 import { AddRowDto } from './dto/AddRowDto';
 import { GetTableDto, TableRowDto } from './dto/GetTableDto';
+import { DeleteRowsDto } from './dto/DeleteRowsDto';
 
 @Injectable()
 export class TablesService {
@@ -157,6 +158,55 @@ export class TablesService {
     );
 
     return newRow;
+  }
+
+  async deleteRow(tableId: string, deleteRowsDto: DeleteRowsDto) {
+    const deleteRowsIds = deleteRowsDto.rowIds;
+
+    const table = await this.tablesRepository.findOneBy({ id: tableId });
+
+    if (!table) {
+      throw new NotFoundException({ message: 'Таблица не найдена' });
+    }
+
+    const manager = this.tablesRepository.manager;
+
+    const rowsInTable = await manager.query<Record<string, unknown>[]>(
+      this.FindRowById(table.id, deleteRowsIds),
+      deleteRowsIds,
+    );
+
+    const allowedRows = new Set(rowsInTable.map((r) => r.id));
+
+    const invalidRowsIds = deleteRowsIds.filter((id) => !allowedRows.has(id));
+
+    if (invalidRowsIds.length > 0) {
+      throw new NotFoundException({
+        message: 'Удаляемых строк не существует',
+        rows: invalidRowsIds,
+      });
+    }
+
+    await manager.query(
+      this.DeleteRowFromUserTableQuery(table.id, deleteRowsIds),
+      deleteRowsIds,
+    );
+
+    return { deletedCount: deleteRowsIds.length };
+  }
+
+  private FindRowById(tableId: string, rowIds: string[]) {
+    return `
+      select * from ${this.userTableSpace}.${tableId}
+      where ${rowIds.map((_, idx) => `id = $${idx + 1}`).join(' or ')};
+    `;
+  }
+
+  private DeleteRowFromUserTableQuery(tableId: string, rowIds: string[]) {
+    return `
+      delete from ${this.userTableSpace}.${tableId}
+      where ${rowIds.map((_, idx) => `id = $${idx + 1}`).join(' or ')};
+    `;
   }
 
   private AddRowToUserTableQuery(tableId: string, cols: string[]) {

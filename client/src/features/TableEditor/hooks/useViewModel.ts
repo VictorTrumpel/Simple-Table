@@ -31,15 +31,7 @@ export const useViewModel = () => {
   };
 
   const deleteRows = async (tableId: string, rowsIds: (number | string)[]) => {
-    for (const rowId of rowsIds) {
-      const response = await tableService.deleteRow(tableId, rowId);
-
-      if (response.error) {
-        return response;
-      }
-    }
-
-    return { error: null };
+    return await tableService.deleteRows(tableId, rowsIds);
   };
 
   const handleCellFocus = (tableId: string, rowId: string, colId: string) => {

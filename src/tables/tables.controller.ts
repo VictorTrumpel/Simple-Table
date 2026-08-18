@@ -12,6 +12,7 @@ import { TablesService } from './tables.service';
 import { CreateTableDto } from './dto/CreateTableDto';
 import { AddColumnDto } from './dto/AddColumnDto';
 import { AddRowDto } from './dto/AddRowDto';
+import { DeleteRowsDto } from './dto/DeleteRowsDto';
 
 @Controller('tables')
 export class TablesController {
@@ -46,5 +47,14 @@ export class TablesController {
   @Post('/:tableId/add-row')
   addRow(@Body() addRowDto: AddRowDto) {
     return this.tablesService.addRow(addRowDto);
+  }
+
+  @Post('/:tableId/delete-rows')
+  @HttpCode(HttpStatus.OK)
+  deleteRows(
+    @Param('tableId') tableId: string,
+    @Body() deleteRowsDto: DeleteRowsDto,
+  ) {
+    return this.tablesService.deleteRow(tableId, deleteRowsDto);
   }
 }

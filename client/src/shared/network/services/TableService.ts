@@ -129,11 +129,23 @@ class TableService {
     }
   }
 
+  async deleteRows(tableId: string, rowIds: (string | number)[]) {
+    try {
+      const { data } = await network.post(`/tables/${tableId}/delete-rows`, {
+        rowIds,
+      });
+
+      return { data: camelcaseKeys(data), error: null };
+    } catch (error) {
+      return { data: null, error: error as AxiosError };
+    }
+  }
+
   async deleteRow(tableId: string, rowId: string | number) {
     try {
-      const { data } = await network.post(`/tables/${tableId}/delete-row`, {
-        row_id: rowId,
-      });
+      const { data } = await network.delete(
+        `/tables/${tableId}/delete-row/${rowId}`,
+      );
 
       return { data: camelcaseKeys(data), error: null };
     } catch (error) {

@@ -109,9 +109,6 @@ export const TableEditor = ({
 
   const possibleEditTable = role === 'admin' || role === 'writer';
 
-  console.log('gridColumns :>> ', gridColumns);
-  console.log('gridRows :>> ', gridRows);
-
   return (
     <DataGrid
       apiRef={apiGrid}
