@@ -82,9 +82,7 @@ class TableService {
 
   async deleteTable(tableId: string) {
     try {
-      const { data } = await network.post(`/tables/delete`, {
-        table_id: tableId,
-      });
+      const { data } = await network.delete(`/tables/delete/${tableId}`);
 
       return { data, error: null };
     } catch (error) {
@@ -95,7 +93,7 @@ class TableService {
   async createColumn(tableId: string, column: { name: string; type: string }) {
     try {
       const { data } = await network.post(`/tables/add-column`, {
-        table_id: tableId,
+        tableId: tableId,
         column,
       });
 

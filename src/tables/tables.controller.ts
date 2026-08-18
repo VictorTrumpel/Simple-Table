@@ -1,6 +1,16 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Delete,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { TablesService } from './tables.service';
 import { CreateTableDto } from './dto/CreateTableDto';
+import { AddColumnDto } from './dto/AddColumnDto';
 
 @Controller('tables')
 export class TablesController {
@@ -12,7 +22,23 @@ export class TablesController {
   }
 
   @Get('/:tableId/info')
-  get(@Param('tableId') tableId: string) {
-    return this.tablesService.getTableById(tableId);
+  getMetadata(@Param('tableId') tableId: string) {
+    return this.tablesService.getTableMetadataById(tableId);
+  }
+
+  @Get('/:tableId')
+  getData(@Param('tableId') tableId: string) {
+    return this.tablesService.getTableDataById(tableId);
+  }
+
+  @Delete('/delete/:tableId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteTable(@Param('tableId') tableId: string) {
+    return this.tablesService.deleteTable(tableId);
+  }
+
+  @Post('/add-column')
+  addColumn(@Body() addColumnDto: AddColumnDto) {
+    return this.tablesService.addColumn(addColumnDto);
   }
 }

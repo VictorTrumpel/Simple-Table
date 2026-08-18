@@ -6,7 +6,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 
-type ColumnType = 'text' | 'numeric' | 'enum' | 'timestamp';
+export type ColumnType = 'text' | 'numeric' | 'enum' | 'timestamp';
 
 @Entity({ name: 'tables' })
 export class Table {
