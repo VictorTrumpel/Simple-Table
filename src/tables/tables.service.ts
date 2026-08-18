@@ -160,58 +160,49 @@ export class TablesService {
     return newRow;
   }
 
-  async deleteRow(tableId: string, deleteRowsDto: DeleteRowsDto) {
-    const deleteRowsIds = deleteRowsDto.rowIds;
+  async deleteRows(tableId: string, deleteRowsDto: DeleteRowsDto) {
+    return await this.tablesRepository.manager.transaction(async (manager) => {
+      const table = await manager.findOneBy(Table, { id: tableId });
 
-    const table = await this.tablesRepository.findOneBy({ id: tableId });
+      if (!table) {
+        throw new NotFoundException({ message: 'Таблица не найдена' });
+      }
 
-    if (!table) {
-      throw new NotFoundException({ message: 'Таблица не найдена' });
-    }
+      const [deletedRows] = await manager.query<[{ id: string }[], number]>(
+        this.DeleteRowsFromUserTableQuery(table.id),
+        [deleteRowsDto.rowIds],
+      );
 
-    const manager = this.tablesRepository.manager;
+      console.log('deletedRows :>> ', deletedRows);
 
-    const rowsInTable = await manager.query<Record<string, unknown>[]>(
-      this.FindRowById(table.id, deleteRowsIds),
-      deleteRowsIds,
-    );
+      const deletedRowsIds = new Set(deletedRows.map((r) => r.id));
 
-    const allowedRows = new Set(rowsInTable.map((r) => r.id));
+      const missingIds = deleteRowsDto.rowIds.filter(
+        (id) => !deletedRowsIds.has(id),
+      );
 
-    const invalidRowsIds = deleteRowsIds.filter((id) => !allowedRows.has(id));
+      if (missingIds.length > 0) {
+        throw new NotFoundException({
+          message: 'Удаляемых строк не существует',
+          rows: missingIds,
+        });
+      }
 
-    if (invalidRowsIds.length > 0) {
-      throw new NotFoundException({
-        message: 'Удаляемых строк не существует',
-        rows: invalidRowsIds,
-      });
-    }
-
-    await manager.query(
-      this.DeleteRowFromUserTableQuery(table.id, deleteRowsIds),
-      deleteRowsIds,
-    );
-
-    return { deletedCount: deleteRowsIds.length };
+      return { deletedCount: deletedRowsIds.size };
+    });
   }
 
-  private FindRowById(tableId: string, rowIds: string[]) {
+  private DeleteRowsFromUserTableQuery(tableId: string) {
     return `
-      select * from ${this.userTableSpace}.${tableId}
-      where ${rowIds.map((_, idx) => `id = $${idx + 1}`).join(' or ')};
-    `;
-  }
-
-  private DeleteRowFromUserTableQuery(tableId: string, rowIds: string[]) {
-    return `
-      delete from ${this.userTableSpace}.${tableId}
-      where ${rowIds.map((_, idx) => `id = $${idx + 1}`).join(' or ')};
+      delete from "${this.userTableSpace}"."${tableId}"
+      where id = any($1::bigint[])
+      returning id;
     `;
   }
 
   private AddRowToUserTableQuery(tableId: string, cols: string[]) {
     return `
-      insert into ${this.userTableSpace}.${tableId}
+      insert into "${this.userTableSpace}"."${tableId}"
         (${cols.join(',')})
       values
         (${cols.map((_, idx) => `$${idx + 1}`).join(',')})
@@ -222,7 +213,7 @@ export class TablesService {
   private GetUserTableQuery(tableId: string) {
     return `
       select * 
-      from ${this.userTableSpace}.${tableId}
+      from "${this.userTableSpace}"."${tableId}"
       where deleted_at is null
       order by sort_index
     `;
@@ -230,7 +221,7 @@ export class TablesService {
 
   private CreateUserTableQuery(table: Table) {
     return `
-      create table ${this.userTableSpace}.${table.id} (
+      create table "${this.userTableSpace}"."${table.id}" (
         id bigserial primary key, 
         sort_index bigserial not null, 
         sort_index_version bigint not null default 0,

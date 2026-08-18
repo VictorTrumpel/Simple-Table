@@ -55,6 +55,6 @@ export class TablesController {
     @Param('tableId') tableId: string,
     @Body() deleteRowsDto: DeleteRowsDto,
   ) {
-    return this.tablesService.deleteRow(tableId, deleteRowsDto);
+    return this.tablesService.deleteRows(tableId, deleteRowsDto);
   }
 }
