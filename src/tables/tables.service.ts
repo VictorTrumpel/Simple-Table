@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateTableDto } from './dto/CreateTableDto';
 import { Repository } from 'typeorm';
 import { Table } from './entities/table.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { AddColumnDto } from './dto/AddColumnDto';
+import { AddRowDto } from './dto/AddRowDto';
+import { GetTableDto, TableRowDto } from './dto/GetTableDto';
 
 @Injectable()
 export class TablesService {
@@ -37,18 +43,35 @@ export class TablesService {
     return await this.tablesRepository.findOneBy({ id: tableId });
   }
 
-  async getTableDataById(tableId: string) {
+  async getTableDataById(tableId: string): Promise<GetTableDto> {
     const tableMeta = await this.getTableMetadataById(tableId);
 
-    if (!tableMeta) throw new NotFoundException('Таблица не найдена');
+    if (!tableMeta) {
+      throw new NotFoundException('Таблица не найдена');
+    }
 
-    const rows: [][] = await this.tablesRepository.manager.query(
-      this.GetUserTableQuery(tableId),
-    );
+    const colsIds = tableMeta.columns.map((col) => col.id);
+
+    const tableRows = await this.tablesRepository.manager.query<
+      Record<string, unknown>[]
+    >(this.GetUserTableQuery(tableId));
+
+    const rowsWithPickedColumns = tableRows.map((row) => {
+      const filteredRow: TableRowDto = {
+        id: String(row.id),
+        data: {},
+      };
+
+      colsIds.forEach((colId) => {
+        filteredRow.data[colId] = row[colId];
+      });
+
+      return filteredRow;
+    });
 
     return {
       table: { ...tableMeta },
-      rows,
+      rows: rowsWithPickedColumns,
     };
   }
 
@@ -93,10 +116,63 @@ export class TablesService {
     });
   }
 
+  async addRow(addRowDto: AddRowDto) {
+    const table = await this.tablesRepository.findOneBy({
+      id: addRowDto.tableId,
+    });
+
+    if (!table) {
+      throw new NotFoundException('Таблица не найдена');
+    }
+
+    const tableColumns = table.columns;
+
+    const allowedColumnsIds = new Set(tableColumns.map((col) => col.id));
+
+    const updatedColIds = Object.keys(addRowDto.data);
+
+    const invalidCols = updatedColIds.filter(
+      (colId) => !allowedColumnsIds.has(colId),
+    );
+
+    if (invalidCols.length > 0) {
+      throw new BadRequestException({
+        message: 'Переданы неизвестные колонки',
+        columns: invalidCols,
+      });
+    }
+
+    if (updatedColIds.length === 0) {
+      throw new BadRequestException({
+        message: 'Строка не содержит данных',
+      });
+    }
+
+    const manager = this.tablesRepository.manager;
+    const colValues = updatedColIds.map((colId) => addRowDto.data[colId]);
+
+    const [newRow] = await manager.query<TableRowDto[]>(
+      this.AddRowToUserTableQuery(table.id, updatedColIds),
+      colValues,
+    );
+
+    return newRow;
+  }
+
+  private AddRowToUserTableQuery(tableId: string, cols: string[]) {
+    return `
+      insert into ${this.userTableSpace}.${tableId}
+        (${cols.join(',')})
+      values
+        (${cols.map((_, idx) => `$${idx + 1}`).join(',')})
+      returning *
+    `;
+  }
+
   private GetUserTableQuery(tableId: string) {
     return `
       select * 
-      from users_tablespace.${tableId}
+      from ${this.userTableSpace}.${tableId}
       where deleted_at is null
       order by sort_index
     `;

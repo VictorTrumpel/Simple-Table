@@ -119,7 +119,7 @@ class TableService {
   async addRow(tableId: string, row: Record<string, unknown>) {
     try {
       const { data } = await network.post(`/tables/${tableId}/add-row`, {
-        table_id: tableId,
+        tableId: tableId,
         data: row,
       });
 

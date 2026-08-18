@@ -11,6 +11,7 @@ import {
 import { TablesService } from './tables.service';
 import { CreateTableDto } from './dto/CreateTableDto';
 import { AddColumnDto } from './dto/AddColumnDto';
+import { AddRowDto } from './dto/AddRowDto';
 
 @Controller('tables')
 export class TablesController {
@@ -40,5 +41,10 @@ export class TablesController {
   @Post('/add-column')
   addColumn(@Body() addColumnDto: AddColumnDto) {
     return this.tablesService.addColumn(addColumnDto);
+  }
+
+  @Post('/:tableId/add-row')
+  addRow(@Body() addRowDto: AddRowDto) {
+    return this.tablesService.addRow(addRowDto);
   }
 }
