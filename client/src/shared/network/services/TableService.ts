@@ -105,10 +105,9 @@ class TableService {
 
   async deleteColumn(tableId: string, columnId: string) {
     try {
-      const { data } = await network.post('/tables/delete-column', {
-        table_id: tableId,
-        column_id: columnId,
-      });
+      const { data } = await network.delete(
+        `/tables/delete/${tableId}/${columnId}`,
+      );
 
       return { data: camelcaseKeys(data), error: null };
     } catch (error) {

@@ -71,7 +71,7 @@ export class TablesService {
     });
 
     return {
-      table: { ...tableMeta },
+      table: tableMeta,
       rows: rowsWithPickedColumns,
     };
   }
@@ -173,8 +173,6 @@ export class TablesService {
         [deleteRowsDto.rowIds],
       );
 
-      console.log('deletedRows :>> ', deletedRows);
-
       const deletedRowsIds = new Set(deletedRows.map((r) => r.id));
 
       const missingIds = deleteRowsDto.rowIds.filter(
@@ -190,6 +188,46 @@ export class TablesService {
 
       return { deletedCount: deletedRowsIds.size };
     });
+  }
+
+  async deleteColumn(tableId: string, columnIdForDelete: string) {
+    return await this.tablesRepository.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(Table);
+
+      const table = await repository.findOne({
+        where: { id: tableId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!table) {
+        throw new NotFoundException({ message: 'Таблица не найдена' });
+      }
+
+      const currentColumns = table.columns;
+
+      const column = currentColumns.find((c) => c.id === columnIdForDelete);
+
+      if (!column) {
+        throw new NotFoundException({
+          message: `Колонка с id ${columnIdForDelete} не найдена`,
+        });
+      }
+
+      await manager.query(
+        this.DeleteColFromUserTableQuery(tableId, columnIdForDelete),
+      );
+
+      table.columns = table.columns.filter((c) => c.id !== columnIdForDelete);
+
+      await manager.save(Table, table);
+    });
+  }
+
+  private DeleteColFromUserTableQuery(tableId: string, colId: string) {
+    return `
+      alter table "${this.userTableSpace}"."${tableId}"
+      drop column "${colId}"
+    `;
   }
 
   private DeleteRowsFromUserTableQuery(tableId: string) {

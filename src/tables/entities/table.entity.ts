@@ -20,7 +20,11 @@ export class Table {
   databaseId!: number;
 
   @Column({ name: 'columns', type: 'jsonb' })
-  columns: { id: string; name: string; type: ColumnType }[] = [];
+  columns: {
+    id: string;
+    name: string;
+    type: ColumnType;
+  }[] = [];
 
   @CreateDateColumn({
     name: 'created_at',

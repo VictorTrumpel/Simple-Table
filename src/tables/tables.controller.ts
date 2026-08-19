@@ -44,6 +44,15 @@ export class TablesController {
     return this.tablesService.addColumn(addColumnDto);
   }
 
+  @Delete('/delete/:tableId/:colId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteColumn(
+    @Param('tableId') tableId: string,
+    @Param('colId') colId: string,
+  ) {
+    return this.tablesService.deleteColumn(tableId, colId);
+  }
+
   @Post('/:tableId/add-row')
   addRow(@Body() addRowDto: AddRowDto) {
     return this.tablesService.addRow(addRowDto);
