@@ -7,12 +7,14 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Put,
 } from '@nestjs/common';
 import { TablesService } from './tables.service';
 import { CreateTableDto } from './dto/CreateTableDto';
 import { AddColumnDto } from './dto/AddColumnDto';
 import { AddRowDto } from './dto/AddRowDto';
 import { DeleteRowsDto } from './dto/DeleteRowsDto';
+import { EditColumnDto } from './dto/EditColumnDto';
 
 @Controller('tables')
 export class TablesController {
@@ -51,6 +53,11 @@ export class TablesController {
     @Param('colId') colId: string,
   ) {
     return this.tablesService.deleteColumn(tableId, colId);
+  }
+
+  @Put('/edit-column')
+  editColumn(@Body() editColumnDto: EditColumnDto) {
+    return this.tablesService.editColumn(editColumnDto);
   }
 
   @Post('/:tableId/add-row')

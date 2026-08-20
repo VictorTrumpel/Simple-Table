@@ -12,6 +12,7 @@ import { AddColumnDto } from './dto/AddColumnDto';
 import { AddRowDto } from './dto/AddRowDto';
 import { GetTableDto, TableRowDto } from './dto/GetTableDto';
 import { DeleteRowsDto } from './dto/DeleteRowsDto';
+import { EditColumnDto } from './dto/EditColumnDto';
 
 @Injectable()
 export class TablesService {
@@ -41,15 +42,17 @@ export class TablesService {
   }
 
   async getTableMetadataById(tableId: string) {
-    return await this.tablesRepository.findOneBy({ id: tableId });
+    const table = await this.findTableOrThrowExeption(
+      tableId,
+      this.tablesRepository,
+      false,
+    );
+
+    return table;
   }
 
   async getTableDataById(tableId: string): Promise<GetTableDto> {
     const tableMeta = await this.getTableMetadataById(tableId);
-
-    if (!tableMeta) {
-      throw new NotFoundException('Таблица не найдена');
-    }
 
     const colsIds = tableMeta.columns.map((col) => col.id);
 
@@ -90,14 +93,11 @@ export class TablesService {
     return await this.tablesRepository.manager.transaction(async (manager) => {
       const repository = manager.getRepository(Table);
 
-      const table = await repository.findOne({
-        where: { id: addColumn.tableId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (!table) {
-        throw new NotFoundException('Таблица не найдена');
-      }
+      const table = await this.findTableOrThrowExeption(
+        addColumn.tableId,
+        repository,
+        false,
+      );
 
       const newColumn = {
         id: `c_${randomUUID().replaceAll('-', '')}`,
@@ -118,13 +118,11 @@ export class TablesService {
   }
 
   async addRow(addRowDto: AddRowDto) {
-    const table = await this.tablesRepository.findOneBy({
-      id: addRowDto.tableId,
-    });
-
-    if (!table) {
-      throw new NotFoundException('Таблица не найдена');
-    }
+    const table = await this.findTableOrThrowExeption(
+      addRowDto.tableId,
+      this.tablesRepository,
+      false,
+    );
 
     const tableColumns = table.columns;
 
@@ -162,11 +160,9 @@ export class TablesService {
 
   async deleteRows(tableId: string, deleteRowsDto: DeleteRowsDto) {
     return await this.tablesRepository.manager.transaction(async (manager) => {
-      const table = await manager.findOneBy(Table, { id: tableId });
+      const repository = manager.getRepository(Table);
 
-      if (!table) {
-        throw new NotFoundException({ message: 'Таблица не найдена' });
-      }
+      const table = await this.findTableOrThrowExeption(tableId, repository);
 
       const [deletedRows] = await manager.query<[{ id: string }[], number]>(
         this.DeleteRowsFromUserTableQuery(table.id),
@@ -194,14 +190,7 @@ export class TablesService {
     return await this.tablesRepository.manager.transaction(async (manager) => {
       const repository = manager.getRepository(Table);
 
-      const table = await repository.findOne({
-        where: { id: tableId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (!table) {
-        throw new NotFoundException({ message: 'Таблица не найдена' });
-      }
+      const table = await this.findTableOrThrowExeption(tableId, repository);
 
       const currentColumns = table.columns;
 
@@ -221,6 +210,62 @@ export class TablesService {
 
       await manager.save(Table, table);
     });
+  }
+
+  async editColumn(editColumnDto: EditColumnDto) {
+    return this.tablesRepository.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(Table);
+
+      const table = await this.findTableOrThrowExeption(
+        editColumnDto.tableId,
+        repository,
+      );
+
+      const currentColumns = table.columns;
+
+      const column = currentColumns.find(
+        (c) => c.id === editColumnDto.column.id,
+      );
+
+      if (!column) {
+        throw new NotFoundException({
+          message: `Колонка с id ${editColumnDto.column.id} не найдена`,
+        });
+      }
+
+      const updatedColumn = {
+        ...column,
+        ...editColumnDto.column,
+      };
+
+      table.columns = table.columns.map((col) => {
+        if (col.id === updatedColumn.id) {
+          return updatedColumn;
+        }
+        return col;
+      });
+
+      await manager.save(Table, table);
+
+      return updatedColumn;
+    });
+  }
+
+  private async findTableOrThrowExeption(
+    tableId: string,
+    repository: Repository<Table>,
+    lock = true,
+  ) {
+    const table = await repository.findOne({
+      where: { id: tableId },
+      ...(lock ? { lock: { mode: 'pessimistic_write' } } : {}),
+    });
+
+    if (!table) {
+      throw new NotFoundException({ message: 'Таблица не найдена' });
+    }
+
+    return table;
   }
 
   private DeleteColFromUserTableQuery(tableId: string, colId: string) {

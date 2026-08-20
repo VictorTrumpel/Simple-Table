@@ -176,8 +176,8 @@ class TableService {
     col: { id: string; name: string; type: string; enum: string[] },
   ) {
     try {
-      const { data } = await network.post(`/tables/edit-column`, {
-        table_id: tableId,
+      const { data } = await network.put(`/tables/edit-column`, {
+        tableId: tableId,
         column: col,
       });
 

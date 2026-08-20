@@ -9,9 +9,13 @@ import {
 import { Type } from 'class-transformer';
 import type { ColumnType } from '../entities/table.entity';
 
-class ColumnDto {
-  @IsString()
+class Column {
   @IsNotEmpty()
+  @IsString()
+  id!: string;
+
+  @IsNotEmpty()
+  @IsString()
   name!: string;
 
   @IsString()
@@ -24,13 +28,13 @@ class ColumnDto {
   enum: string[] = [];
 }
 
-export class AddColumnDto {
-  @IsDefined()
-  @ValidateNested()
-  @Type(() => ColumnDto)
-  column!: ColumnDto;
-
+export class EditColumnDto {
   @IsNotEmpty()
   @IsString()
   tableId!: string;
+
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => Column)
+  column!: Column;
 }
