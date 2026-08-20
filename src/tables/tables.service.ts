@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateTableDto } from './dto/CreateTableDto';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Table } from './entities/table.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
@@ -13,6 +13,7 @@ import { AddRowDto } from './dto/AddRowDto';
 import { GetTableDto, TableRowDto } from './dto/GetTableDto';
 import { DeleteRowsDto } from './dto/DeleteRowsDto';
 import { EditColumnDto } from './dto/EditColumnDto';
+import { UserTable } from './entities/userTable.entity';
 
 @Injectable()
 export class TablesService {
@@ -35,7 +36,11 @@ export class TablesService {
 
       await manager.save(table);
 
-      await manager.query(this.CreateUserTableQuery(table));
+      const userTable = this.createUserTableRepository(
+        this.tablesRepository.manager,
+      );
+
+      await userTable.createUserTableQuery(table);
 
       return table;
     });
@@ -56,9 +61,10 @@ export class TablesService {
 
     const colsIds = tableMeta.columns.map((col) => col.id);
 
-    const tableRows = await this.tablesRepository.manager.query<
-      Record<string, unknown>[]
-    >(this.GetUserTableQuery(tableId));
+    const userTable = this.createUserTableRepository(
+      this.tablesRepository.manager,
+    );
+    const tableRows = await userTable.getUserTableQuery(tableId);
 
     const rowsWithPickedColumns = tableRows.map((row) => {
       const filteredRow: TableRowDto = {
@@ -150,8 +156,10 @@ export class TablesService {
     const manager = this.tablesRepository.manager;
     const colValues = updatedColIds.map((colId) => addRowDto.data[colId]);
 
-    const [newRow] = await manager.query<TableRowDto[]>(
-      this.AddRowToUserTableQuery(table.id, updatedColIds),
+    const userTable = this.createUserTableRepository(manager);
+    const newRow = await userTable.addRowToUserTableQuery(
+      table.id,
+      updatedColIds,
       colValues,
     );
 
@@ -164,10 +172,12 @@ export class TablesService {
 
       const table = await this.findTableOrThrowExeption(tableId, repository);
 
-      const [deletedRows] = await manager.query<[{ id: string }[], number]>(
-        this.DeleteRowsFromUserTableQuery(table.id),
-        [deleteRowsDto.rowIds],
-      );
+      const userTableRepository = this.createUserTableRepository(manager);
+      const deletedRows =
+        await userTableRepository.deleteRowsFromUserTableQuery(
+          table.id,
+          deleteRowsDto.rowIds,
+        );
 
       const deletedRowsIds = new Set(deletedRows.map((r) => r.id));
 
@@ -202,8 +212,10 @@ export class TablesService {
         });
       }
 
-      await manager.query(
-        this.DeleteColFromUserTableQuery(tableId, columnIdForDelete),
+      const userTableRepository = this.createUserTableRepository(manager);
+      await userTableRepository.deleteColFromUserTableQuery(
+        tableId,
+        columnIdForDelete,
       );
 
       table.columns = table.columns.filter((c) => c.id !== columnIdForDelete);
@@ -268,50 +280,7 @@ export class TablesService {
     return table;
   }
 
-  private DeleteColFromUserTableQuery(tableId: string, colId: string) {
-    return `
-      alter table "${this.userTableSpace}"."${tableId}"
-      drop column "${colId}"
-    `;
-  }
-
-  private DeleteRowsFromUserTableQuery(tableId: string) {
-    return `
-      delete from "${this.userTableSpace}"."${tableId}"
-      where id = any($1::bigint[])
-      returning id;
-    `;
-  }
-
-  private AddRowToUserTableQuery(tableId: string, cols: string[]) {
-    return `
-      insert into "${this.userTableSpace}"."${tableId}"
-        (${cols.join(',')})
-      values
-        (${cols.map((_, idx) => `$${idx + 1}`).join(',')})
-      returning *
-    `;
-  }
-
-  private GetUserTableQuery(tableId: string) {
-    return `
-      select * 
-      from "${this.userTableSpace}"."${tableId}"
-      where deleted_at is null
-      order by sort_index
-    `;
-  }
-
-  private CreateUserTableQuery(table: Table) {
-    return `
-      create table "${this.userTableSpace}"."${table.id}" (
-        id bigserial primary key, 
-        sort_index bigserial not null, 
-        sort_index_version bigint not null default 0,
-        ${table.columns.map((col) => `${col.id} text`).join(',')}
-        ${table.columns.length ? ',' : ''}
-        deleted_at timestamp with time zone
-      )
-    `;
+  private createUserTableRepository(manager: EntityManager) {
+    return new UserTable(manager);
   }
 }
