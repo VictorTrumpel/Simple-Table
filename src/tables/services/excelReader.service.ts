@@ -11,7 +11,7 @@ export class ExcleReaderService {
 
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-    const rows: string[][] = XLSX.utils.sheet_to_json(sheet, {
+    const rows: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
       header: 1,
       defval: null,
     });

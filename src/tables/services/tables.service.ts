@@ -274,7 +274,7 @@ export class TablesService {
       const cols: Table['columns'] = fileData[0].map((name) => ({
         id: this.createColId(),
         type: 'text',
-        name,
+        name: String(name),
       }));
 
       const newTable = this.createTable(createTableDto, cols);
@@ -289,9 +289,7 @@ export class TablesService {
 
       const values = fileData.slice(1, fileData.length);
 
-      for (const row of values) {
-        await newUserTable.addRowToUserTableQuery(newTable.id, colsIds, row);
-      }
+      await newUserTable.addRowsToUserTableQuery(newTable.id, colsIds, values);
 
       return { tableId: newTable.id };
     });

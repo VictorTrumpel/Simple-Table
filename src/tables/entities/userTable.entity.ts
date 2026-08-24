@@ -55,6 +55,35 @@ export class UserTable {
     return newRow;
   }
 
+  async addRowsToUserTableQuery(
+    tableId: string,
+    updatedColIds: string[],
+    colValues: unknown[][],
+  ) {
+    const parameters: unknown[] = [];
+
+    const valuesSql = colValues
+      .map((row) => {
+        const placeholders = row.map((value) => {
+          parameters.push(value);
+          return `$${parameters.length}`;
+        });
+
+        return `(${placeholders.join(', ')})`;
+      })
+      .join(', ');
+
+    return this.entityManager.query<TableRowDto[]>(
+      `
+        insert into "${this.userTableSpace}"."${tableId}"
+          (${updatedColIds.map((id) => `"${id}"`).join(', ')})
+        values ${valuesSql}
+        returning *
+      `,
+      parameters,
+    );
+  }
+
   async getUserTableQuery(tableId: string) {
     const tableRows = await this.entityManager.query<
       Record<string, unknown>[]
