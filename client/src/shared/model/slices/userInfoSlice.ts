@@ -1,7 +1,7 @@
-import { createSlice } from "@reduxjs/toolkit";
-import type { PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
-export type UserRole = "constructor" | "writer" | "reader";
+export type UserRole = 'constructor' | 'writer' | 'reader';
 
 export type UserInfo = {
   email: string;
@@ -15,11 +15,10 @@ type State = {
 const initialState: State = { user: null };
 
 export const userInfoSlice = createSlice({
-  name: "tableSlice",
+  name: 'tableSlice',
   initialState,
   reducers: {
     setUserInfo: (state, { payload }: PayloadAction<UserInfo>) => {
-      console.log("payload :>> ", payload);
       state.user = payload;
     },
     clearUserInfo: (state) => {

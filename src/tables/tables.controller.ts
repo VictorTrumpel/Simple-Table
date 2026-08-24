@@ -8,13 +8,18 @@ import {
   HttpCode,
   HttpStatus,
   Put,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { TablesService } from './tables.service';
+import type { Express } from 'express';
+import { TablesService } from './services/tables.service';
 import { CreateTableDto } from './dto/CreateTableDto';
 import { AddColumnDto } from './dto/AddColumnDto';
 import { AddRowDto } from './dto/AddRowDto';
 import { DeleteRowsDto } from './dto/DeleteRowsDto';
 import { EditColumnDto } from './dto/EditColumnDto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateTableFormDataDto } from './dto/CreateTableFormDataDto';
 
 @Controller('tables')
 export class TablesController {
@@ -72,5 +77,17 @@ export class TablesController {
     @Body() deleteRowsDto: DeleteRowsDto,
   ) {
     return this.tablesService.deleteRows(tableId, deleteRowsDto);
+  }
+
+  @Post('/import')
+  @UseInterceptors(FileInterceptor('file'))
+  importTableByExcel(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() importTableDto: CreateTableFormDataDto,
+  ) {
+    return this.tablesService.importTableFromExcel(file, {
+      ...importTableDto,
+      databaseId: Number(importTableDto.databaseId),
+    });
   }
 }

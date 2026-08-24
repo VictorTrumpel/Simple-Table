@@ -7,6 +7,13 @@ export class UserTable {
 
   constructor(private entityManager: EntityManager) {}
 
+  async addCol(tableId: string, colId: string) {
+    return this.entityManager.query<void>(`
+      alter table "${this.userTableSpace}"."${tableId}"
+      add column "${colId}"
+    `);
+  }
+
   async deleteColFromUserTableQuery(tableId: string, colId: string) {
     return this.entityManager.query<void>(`
       alter table "${this.userTableSpace}"."${tableId}"
@@ -73,4 +80,6 @@ export class UserTable {
       )
     `);
   }
+
+  async insertUserDataQuery() {}
 }

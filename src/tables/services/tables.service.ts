@@ -3,25 +3,25 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateTableDto } from './dto/CreateTableDto';
+import { CreateTableDto } from '../dto/CreateTableDto';
 import { Repository, EntityManager } from 'typeorm';
-import { Table } from './entities/table.entity';
+import { Table } from '../entities/table.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { AddColumnDto } from './dto/AddColumnDto';
-import { AddRowDto } from './dto/AddRowDto';
-import { GetTableDto, TableRowDto } from './dto/GetTableDto';
-import { DeleteRowsDto } from './dto/DeleteRowsDto';
-import { EditColumnDto } from './dto/EditColumnDto';
-import { UserTable } from './entities/userTable.entity';
+import { AddColumnDto } from '../dto/AddColumnDto';
+import { AddRowDto } from '../dto/AddRowDto';
+import { GetTableDto, TableRowDto } from '../dto/GetTableDto';
+import { DeleteRowsDto } from '../dto/DeleteRowsDto';
+import { EditColumnDto } from '../dto/EditColumnDto';
+import { UserTable } from '../entities/userTable.entity';
+import { ExcleReaderService } from './excelReader.service';
 
 @Injectable()
 export class TablesService {
-  private userTableSpace = 'users_tablespace';
-
   constructor(
     @InjectRepository(Table)
     private readonly tablesRepository: Repository<Table>,
+    private readonly excelReaderService: ExcleReaderService,
   ) {}
 
   async create(createTableDto: CreateTableDto) {
@@ -106,14 +106,15 @@ export class TablesService {
       );
 
       const newColumn = {
-        id: `c_${randomUUID().replaceAll('-', '')}`,
+        id: this.createColId(),
         ...addColumn.column,
       };
 
-      await manager.query(`
-        alter table "${this.userTableSpace}"."${table.id}" 
-        add column "${newColumn.id}" text 
-      `);
+      const userTable = this.createUserTableRepository(
+        this.tablesRepository.manager,
+      );
+
+      await userTable.addCol(table.id, newColumn.id);
 
       table.columns = [...table.columns, newColumn];
 
@@ -261,6 +262,58 @@ export class TablesService {
 
       return updatedColumn;
     });
+  }
+
+  importTableFromExcel(
+    file: Express.Multer.File,
+    createTableDto: CreateTableDto,
+  ) {
+    return this.tablesRepository.manager.transaction(async (manager) => {
+      const fileData = this.excelReaderService.readFileData(file);
+
+      const cols: Table['columns'] = fileData[0].map((name) => ({
+        id: this.createColId(),
+        type: 'text',
+        name,
+      }));
+
+      const newTable = this.createTable(createTableDto, cols);
+
+      await manager.save(newTable);
+
+      const newUserTable = this.createUserTableRepository(manager);
+
+      await newUserTable.createUserTableQuery(newTable);
+
+      const colsIds = cols.map(({ id }) => id);
+
+      const values = fileData.slice(1, fileData.length);
+
+      for (const row of values) {
+        await newUserTable.addRowToUserTableQuery(newTable.id, colsIds, row);
+      }
+
+      return { tableId: newTable.id };
+    });
+  }
+
+  private createColId() {
+    return `c_${randomUUID().replaceAll('-', '')}`;
+  }
+
+  private createTable(
+    createTableDto: CreateTableDto,
+    columns: Table['columns'] = [],
+  ) {
+    const tableUuid = `t_${randomUUID().replaceAll('-', '')}`;
+
+    const table = this.tablesRepository.create({
+      ...createTableDto,
+      id: tableUuid,
+      columns,
+    });
+
+    return table;
   }
 
   private async findTableOrThrowExeption(
