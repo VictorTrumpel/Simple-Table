@@ -10,7 +10,7 @@ export class UserTable {
   async addCol(tableId: string, colId: string) {
     return this.entityManager.query<void>(`
       alter table "${this.userTableSpace}"."${tableId}"
-      add column "${colId}"
+      add column "${colId}" text
     `);
   }
 
@@ -109,6 +109,4 @@ export class UserTable {
       )
     `);
   }
-
-  async insertUserDataQuery() {}
 }
