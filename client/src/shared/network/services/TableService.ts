@@ -3,7 +3,6 @@ import type { AxiosError } from 'axios';
 import type { GetTableDataDTO } from '../dto/table/GetTableDataDTO.js';
 import type { GetTableMetaDTO } from '../dto/table/GetTableMetaDTO.js';
 import { type Response } from '../shared/Response.js';
-import camelcaseKeys from 'camelcase-keys';
 
 class TableService {
   async getTable(
@@ -34,7 +33,7 @@ class TableService {
         },
       });
       return {
-        data: { ...data, table: camelcaseKeys(data.table, { deep: true }) },
+        data: { ...data, table: data.table },
         error: null,
       };
     } catch (error) {
@@ -45,7 +44,7 @@ class TableService {
   async getTableMeta(tableId: string): Promise<Response<GetTableMetaDTO>> {
     try {
       const { data } = await network.get(`/tables/${tableId}/info`);
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }
@@ -59,7 +58,7 @@ class TableService {
         columns: [],
       });
 
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }
@@ -74,7 +73,7 @@ class TableService {
 
       const { data } = await network.post(`/tables/import`, formData);
 
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }
@@ -97,7 +96,7 @@ class TableService {
         column,
       });
 
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }
@@ -109,7 +108,7 @@ class TableService {
         `/tables/delete/${tableId}/${columnId}`,
       );
 
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }
@@ -122,7 +121,7 @@ class TableService {
         data: row,
       });
 
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }
@@ -134,7 +133,7 @@ class TableService {
         rowIds,
       });
 
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }
@@ -146,7 +145,7 @@ class TableService {
         `/tables/${tableId}/delete-row/${rowId}`,
       );
 
-      return { data: camelcaseKeys(data), error: null };
+      return { data, error: null };
     } catch (error) {
       return { data: null, error: error as AxiosError };
     }

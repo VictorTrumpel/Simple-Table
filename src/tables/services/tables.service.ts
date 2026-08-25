@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateTableDto } from '../dto/CreateTableDto';
-import { Repository, EntityManager } from 'typeorm';
+import { Repository, EntityManager, DataSource } from 'typeorm';
 import { Table } from '../entities/table.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
@@ -15,6 +15,7 @@ import { DeleteRowsDto } from '../dto/DeleteRowsDto';
 import { EditColumnDto } from '../dto/EditColumnDto';
 import { UserTable } from '../entities/userTable.entity';
 import { ExcleReaderService } from './excelReader.service';
+import { ReadQueryTableDto } from '../dto/ReadQueryTableDto';
 
 @Injectable()
 export class TablesService {
@@ -22,6 +23,7 @@ export class TablesService {
     @InjectRepository(Table)
     private readonly tablesRepository: Repository<Table>,
     private readonly excelReaderService: ExcleReaderService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createTableDto: CreateTableDto) {
@@ -56,7 +58,10 @@ export class TablesService {
     return table;
   }
 
-  async getTableDataById(tableId: string): Promise<GetTableDto> {
+  async readTable(
+    tableId: string,
+    readTableQuery: ReadQueryTableDto,
+  ): Promise<GetTableDto> {
     const tableMeta = await this.getTableMetadataById(tableId);
 
     const colsIds = tableMeta.columns.map((col) => col.id);
@@ -64,9 +69,11 @@ export class TablesService {
     const userTable = this.createUserTableRepository(
       this.tablesRepository.manager,
     );
-    const tableRows = await userTable.getUserTableQuery(tableId);
 
-    const rowsWithPickedColumns = tableRows.map((row) => {
+    const tableRows = await userTable.readTable(tableId, readTableQuery);
+    const totalRows = await userTable.getTotalRowsOfTable(tableId);
+
+    const rowsMatchedWithColumns = tableRows.map((row) => {
       const filteredRow: TableRowDto = {
         id: String(row.id),
         data: {},
@@ -80,8 +87,8 @@ export class TablesService {
     });
 
     return {
-      table: tableMeta,
-      rows: rowsWithPickedColumns,
+      table: { ...tableMeta, totalRows },
+      rows: rowsMatchedWithColumns,
     };
   }
 

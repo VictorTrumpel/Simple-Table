@@ -4,9 +4,9 @@ import {
   Typography,
   type BoxProps,
   IconButton,
-} from "@mui/material";
-import Select from "@mui/material/Select";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+} from '@mui/material';
+import Select from '@mui/material/Select';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 type TablePaginatorProps = {
   page: number;
@@ -16,7 +16,7 @@ type TablePaginatorProps = {
     page: number;
     pageSize: number;
   }) => void;
-  sx?: BoxProps["sx"];
+  sx?: BoxProps['sx'];
 };
 
 export const TablePaginator = ({
@@ -26,6 +26,8 @@ export const TablePaginator = ({
   onChangePaginationMeta,
   sx,
 }: TablePaginatorProps) => {
+  console.log('totalItems :>> ', totalItems);
+
   const handlePageNext = () => {
     if (page * pageSize < totalItems) {
       onChangePaginationMeta({ pageSize, page: page + 1 });
@@ -69,7 +71,7 @@ export const TablePaginator = ({
 
         <IconButton size="small" onClick={handlePageNext}>
           <ArrowBackIosNewIcon
-            sx={{ transform: "rotate(180deg)" }}
+            sx={{ transform: 'rotate(180deg)' }}
             fontSize="inherit"
           />
         </IconButton>

@@ -2,6 +2,11 @@ import { EntityManager } from 'typeorm';
 import { TableRowDto } from '../dto/GetTableDto';
 import { Table } from './table.entity';
 
+export type ReadTableQuery = {
+  page?: number;
+  perPage?: number;
+};
+
 export class UserTable {
   private userTableSpace = 'users_tablespace';
 
@@ -84,17 +89,31 @@ export class UserTable {
     );
   }
 
-  async getUserTableQuery(tableId: string) {
-    const tableRows = await this.entityManager.query<
-      Record<string, unknown>[]
-    >(`
-      select * 
-      from "${this.userTableSpace}"."${tableId}"
-      where deleted_at is null
-      order by sort_index
-    `);
+  async readTable(
+    tableId: string,
+    query: ReadTableQuery,
+  ): Promise<Record<string, unknown>[]> {
+    const { page = 1, perPage = 100 } = query;
 
-    return tableRows;
+    return this.entityManager
+      .createQueryBuilder()
+      .select('row.*')
+      .from(`${this.userTableSpace}.${tableId}`, 'row')
+      .where('row.deleted_at IS NULL')
+      .skip((page - 1) * perPage)
+      .take(perPage)
+      .getRawMany();
+  }
+
+  async getTotalRowsOfTable(tableId: string): Promise<number> {
+    const result = await this.entityManager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'total')
+      .from(`${this.userTableSpace}.${tableId}`, 'row')
+      .where('row.deleted_at is NULL')
+      .getRawOne<{ total: string }>();
+
+    return Number(result?.total ?? 0);
   }
 
   async createUserTableQuery(table: Table) {

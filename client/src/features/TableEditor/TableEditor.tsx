@@ -111,6 +111,8 @@ export const TableEditor = ({
 
   return (
     <DataGrid
+      sortingMode="server"
+      filterMode="server"
       apiRef={apiGrid}
       autosizeOnMount
       disableRowSelectionOnClick

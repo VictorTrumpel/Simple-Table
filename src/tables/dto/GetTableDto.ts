@@ -15,6 +15,7 @@ export type GetTableDto = {
     databaseId: number;
     columns: TableColumnDto[];
     createdAt: Date;
+    totalRows: number;
   };
   rows: TableRowDto[];
 };

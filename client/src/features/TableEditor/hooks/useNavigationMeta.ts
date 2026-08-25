@@ -1,5 +1,5 @@
-import type { GridSortModel } from "@mui/x-data-grid";
-import { useState } from "react";
+import type { GridSortModel } from '@mui/x-data-grid';
+import { useState } from 'react';
 
 export type PaginationMeta = {
   page: number;
@@ -8,7 +8,7 @@ export type PaginationMeta = {
 
 export type SortMeta = {
   field: string;
-  sort: "asc" | "desc" | null | undefined;
+  sort: 'asc' | 'desc' | null | undefined;
 };
 
 export const useNavigationMeta = () => {
@@ -18,7 +18,7 @@ export const useNavigationMeta = () => {
   });
 
   const [sortMeta, setSortMeta] = useState<SortMeta>({
-    field: "",
+    field: '',
     sort: undefined,
   });
 
@@ -33,7 +33,7 @@ export const useNavigationMeta = () => {
       return;
     }
 
-    setSortMeta({ field: "", sort: undefined });
+    setSortMeta({ field: '', sort: undefined });
   };
 
   return {

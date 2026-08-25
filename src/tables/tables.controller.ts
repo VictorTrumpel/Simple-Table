@@ -10,6 +10,7 @@ import {
   Put,
   UseInterceptors,
   UploadedFile,
+  Query,
 } from '@nestjs/common';
 import type { Express } from 'express';
 import { TablesService } from './services/tables.service';
@@ -20,6 +21,7 @@ import { DeleteRowsDto } from './dto/DeleteRowsDto';
 import { EditColumnDto } from './dto/EditColumnDto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateTableFormDataDto } from './dto/CreateTableFormDataDto';
+import { ReadQueryTableDto } from './dto/ReadQueryTableDto';
 
 @Controller('tables')
 export class TablesController {
@@ -36,8 +38,11 @@ export class TablesController {
   }
 
   @Get('/:tableId')
-  getData(@Param('tableId') tableId: string) {
-    return this.tablesService.getTableDataById(tableId);
+  getData(
+    @Param('tableId') tableId: string,
+    @Query() readQuery: ReadQueryTableDto,
+  ) {
+    return this.tablesService.readTable(tableId, readQuery);
   }
 
   @Delete('/delete/:tableId')
