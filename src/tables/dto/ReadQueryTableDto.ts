@@ -28,4 +28,14 @@ export class ReadQueryTableDto {
   @IsIn(['asc', 'desc'])
   @IsOptional()
   sortDir?: 'asc' | 'desc';
+
+  @Type(() => String)
+  @IsString()
+  @IsOptional()
+  filterBy?: string;
+
+  @Type(() => String)
+  @IsString()
+  @IsOptional()
+  filterValue?: string;
 }

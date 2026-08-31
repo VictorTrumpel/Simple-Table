@@ -7,6 +7,8 @@ export type ReadTableQuery = {
   perPage?: number;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  filterBy?: string;
+  filterValue?: string;
 };
 
 export class UserTable {
@@ -95,7 +97,14 @@ export class UserTable {
     tableId: string,
     queryParams: ReadTableQuery,
   ): Promise<Record<string, unknown>[]> {
-    const { page = 1, perPage = 100, sortBy, sortDir } = queryParams;
+    const {
+      page = 1,
+      perPage = 100,
+      sortBy,
+      sortDir,
+      filterBy,
+      filterValue,
+    } = queryParams;
 
     const query = this.entityManager
       .createQueryBuilder()
@@ -106,7 +115,15 @@ export class UserTable {
       .take(perPage);
 
     if (sortBy && sortDir) {
-      query.orderBy(`row.${sortBy}`, sortDir === 'asc' ? 'ASC' : 'DESC');
+      query.orderBy(`row."${sortBy}"`, sortDir === 'asc' ? 'ASC' : 'DESC');
+    }
+
+    const normalizedFilterValue = filterValue?.trim();
+
+    if (filterBy && normalizedFilterValue) {
+      query.andWhere(`row."${filterBy}" ILIKE :searchValue`, {
+        searchValue: `%${normalizedFilterValue}%`,
+      });
     }
 
     query.addOrderBy('row.sort_index', 'ASC');
