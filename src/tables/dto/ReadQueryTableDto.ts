@@ -1,5 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class ReadQueryTableDto {
   @Type(() => Number)
@@ -11,4 +17,15 @@ export class ReadQueryTableDto {
   @IsNotEmpty()
   @IsNumber()
   perPage!: number;
+
+  @Type(() => String)
+  @IsString()
+  @IsOptional()
+  sortBy?: string;
+
+  @Type(() => String)
+  @IsString()
+  @IsIn(['asc', 'desc'])
+  @IsOptional()
+  sortDir?: 'asc' | 'desc';
 }

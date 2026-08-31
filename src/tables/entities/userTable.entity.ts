@@ -5,6 +5,8 @@ import { Table } from './table.entity';
 export type ReadTableQuery = {
   page?: number;
   perPage?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 };
 
 export class UserTable {
@@ -91,18 +93,26 @@ export class UserTable {
 
   async readTable(
     tableId: string,
-    query: ReadTableQuery,
+    queryParams: ReadTableQuery,
   ): Promise<Record<string, unknown>[]> {
-    const { page = 1, perPage = 100 } = query;
+    const { page = 1, perPage = 100, sortBy, sortDir } = queryParams;
 
-    return this.entityManager
+    const query = this.entityManager
       .createQueryBuilder()
       .select('row.*')
       .from(`${this.userTableSpace}.${tableId}`, 'row')
       .where('row.deleted_at IS NULL')
       .skip((page - 1) * perPage)
-      .take(perPage)
-      .getRawMany();
+      .take(perPage);
+
+    if (sortBy && sortDir) {
+      query.orderBy(`row.${sortBy}`, sortDir === 'asc' ? 'ASC' : 'DESC');
+    }
+
+    query.addOrderBy('row.sort_index', 'ASC');
+    query.addOrderBy('row.sort_index_version', 'DESC');
+
+    return query.getRawMany();
   }
 
   async getTotalRowsOfTable(tableId: string): Promise<number> {
@@ -125,6 +135,16 @@ export class UserTable {
         ${table.columns.map((col) => `${col.id} text`).join(',')}
         ${table.columns.length ? ',' : ''}
         deleted_at timestamp with time zone
+      )
+    `);
+  }
+
+  async createSortIndex(tableId: string) {
+    return this.entityManager.query<void>(`
+      create index if not exists ${tableId}_order_idx
+      on ${this.userTableSpace}.${tableId} (
+        sort_index asc,
+        sort_index_version desc
       )
     `);
   }

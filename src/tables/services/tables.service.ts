@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateTableDto } from '../dto/CreateTableDto';
-import { Repository, EntityManager, DataSource } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Table } from '../entities/table.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
@@ -23,7 +23,6 @@ export class TablesService {
     @InjectRepository(Table)
     private readonly tablesRepository: Repository<Table>,
     private readonly excelReaderService: ExcleReaderService,
-    private readonly dataSource: DataSource,
   ) {}
 
   async create(createTableDto: CreateTableDto) {
@@ -43,6 +42,8 @@ export class TablesService {
       );
 
       await userTable.createUserTableQuery(table);
+
+      await userTable.createSortIndex(table.id);
 
       return table;
     });
@@ -291,6 +292,8 @@ export class TablesService {
       const newUserTable = this.createUserTableRepository(manager);
 
       await newUserTable.createUserTableQuery(newTable);
+
+      await newUserTable.createSortIndex(newTable.id);
 
       const colsIds = cols.map(({ id }) => id);
 

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { Express } from 'express';
 import * as XLSX from 'xlsx';
 
 @Injectable()
