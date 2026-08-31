@@ -72,7 +72,10 @@ export class TablesService {
     );
 
     const tableRows = await userTable.readTable(tableId, readTableQuery);
-    const totalRows = await userTable.getTotalRowsOfTable(tableId);
+    const totalRows = await userTable.getTotalRowsOfTable(
+      tableId,
+      readTableQuery,
+    );
 
     const rowsMatchedWithColumns = tableRows.map((row) => {
       const filteredRow: TableRowDto = {

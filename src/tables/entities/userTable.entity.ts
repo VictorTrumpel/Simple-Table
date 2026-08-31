@@ -106,11 +106,8 @@ export class UserTable {
       filterValue,
     } = queryParams;
 
-    const query = this.entityManager
-      .createQueryBuilder()
+    const query = this.createFilteredQuery(tableId, queryParams)
       .select('row.*')
-      .from(`${this.userTableSpace}.${tableId}`, 'row')
-      .where('row.deleted_at IS NULL')
       .skip((page - 1) * perPage)
       .take(perPage);
 
@@ -132,12 +129,12 @@ export class UserTable {
     return query.getRawMany();
   }
 
-  async getTotalRowsOfTable(tableId: string): Promise<number> {
-    const result = await this.entityManager
-      .createQueryBuilder()
+  async getTotalRowsOfTable(
+    tableId: string,
+    queryParams: ReadTableQuery,
+  ): Promise<number> {
+    const result = await this.createFilteredQuery(tableId, queryParams)
       .select('COUNT(*)', 'total')
-      .from(`${this.userTableSpace}.${tableId}`, 'row')
-      .where('row.deleted_at is NULL')
       .getRawOne<{ total: string }>();
 
     return Number(result?.total ?? 0);
@@ -164,5 +161,27 @@ export class UserTable {
         sort_index_version desc
       )
     `);
+  }
+
+  private createFilteredQuery(
+    tableId: string,
+    queryParams: Pick<ReadTableQuery, 'filterBy' | 'filterValue'>,
+  ) {
+    const { filterBy, filterValue } = queryParams;
+
+    const query = this.entityManager
+      .createQueryBuilder()
+      .from(`${this.userTableSpace}.${tableId}`, 'row')
+      .where('row.deleted_at is null');
+
+    const normalizedFilterValue = filterValue?.trim();
+
+    if (filterBy && normalizedFilterValue) {
+      query.andWhere(`row."${filterBy}" ILIKE :searchValue`, {
+        searchValue: `%${normalizedFilterValue}%`,
+      });
+    }
+
+    return query;
   }
 }
