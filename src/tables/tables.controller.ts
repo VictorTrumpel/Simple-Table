@@ -19,6 +19,7 @@ import { AddColumnDto } from './dto/AddColumnDto';
 import { AddRowDto } from './dto/AddRowDto';
 import { DeleteRowsDto } from './dto/DeleteRowsDto';
 import { EditColumnDto } from './dto/EditColumnDto';
+import { SetCellValueDto } from './dto/SetCellValueDto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateTableFormDataDto } from './dto/CreateTableFormDataDto';
 import { ReadQueryTableDto } from './dto/ReadQueryTableDto';
@@ -82,6 +83,14 @@ export class TablesController {
     @Body() deleteRowsDto: DeleteRowsDto,
   ) {
     return this.tablesService.deleteRows(tableId, deleteRowsDto);
+  }
+
+  @Put('/:tableId/set-cell-value')
+  setCellValue(
+    @Param('tableId') tableId: string,
+    @Body() setCellValueDto: SetCellValueDto,
+  ) {
+    return this.tablesService.setCellValue(tableId, setCellValueDto);
   }
 
   @Post('/import')

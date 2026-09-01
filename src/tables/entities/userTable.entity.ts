@@ -1,6 +1,7 @@
 import { EntityManager } from 'typeorm';
 import { TableRowDto } from '../dto/GetTableDto';
 import { Table } from './table.entity';
+import { SetCellValueDto } from '../dto/SetCellValueDto';
 
 export type ReadTableQuery = {
   page?: number;
@@ -161,6 +162,24 @@ export class UserTable {
         sort_index_version desc
       )
     `);
+  }
+
+  async setCellValue(tableId: string, setCellValueDto: SetCellValueDto) {
+    const { columnId, rowId, value } = setCellValueDto;
+
+    const [updatedRows] = await this.entityManager.query<
+      [Record<string, unknown>[], number]
+    >(
+      `
+        update "${this.userTableSpace}"."${tableId}"
+        set "${columnId}" = $1
+        where id = $2 and deleted_at is null
+        returning *   
+      `,
+      [value, rowId],
+    );
+
+    return updatedRows;
   }
 
   private createFilteredQuery(

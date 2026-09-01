@@ -16,6 +16,7 @@ import { EditColumnDto } from '../dto/EditColumnDto';
 import { UserTable } from '../entities/userTable.entity';
 import { ExcleReaderService } from './excelReader.service';
 import { ReadQueryTableDto } from '../dto/ReadQueryTableDto';
+import { SetCellValueDto } from '../dto/SetCellValueDto';
 
 @Injectable()
 export class TablesService {
@@ -65,34 +66,22 @@ export class TablesService {
   ): Promise<GetTableDto> {
     const tableMeta = await this.getTableMetadataById(tableId);
 
-    const colsIds = tableMeta.columns.map((col) => col.id);
-
     const userTable = this.createUserTableRepository(
       this.tablesRepository.manager,
     );
 
     const tableRows = await userTable.readTable(tableId, readTableQuery);
+
     const totalRows = await userTable.getTotalRowsOfTable(
       tableId,
       readTableQuery,
     );
 
-    const rowsMatchedWithColumns = tableRows.map((row) => {
-      const filteredRow: TableRowDto = {
-        id: String(row.id),
-        data: {},
-      };
-
-      colsIds.forEach((colId) => {
-        filteredRow.data[colId] = row[colId];
-      });
-
-      return filteredRow;
-    });
+    const rows = this.pickColsFromRows(tableMeta, tableRows);
 
     return {
       table: { ...tableMeta, totalRows },
-      rows: rowsMatchedWithColumns,
+      rows,
     };
   }
 
@@ -306,6 +295,57 @@ export class TablesService {
 
       return { tableId: newTable.id };
     });
+  }
+
+  async setCellValue(tableId: string, setCellValue: SetCellValueDto) {
+    return this.tablesRepository.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(Table);
+
+      const table = await this.findTableOrThrowExeption(
+        tableId,
+        repository,
+        false,
+      );
+
+      const columnExist = table.columns.some(
+        (c) => c.id === setCellValue.columnId,
+      );
+
+      if (!columnExist) {
+        throw new NotFoundException({
+          message: `column with id ${setCellValue.columnId} does not exist`,
+        });
+      }
+
+      const userTable = this.createUserTableRepository(
+        this.tablesRepository.manager,
+      );
+
+      const updatedRows = await userTable.setCellValue(tableId, setCellValue);
+
+      const rows = this.pickColsFromRows(table, updatedRows);
+
+      return { rows };
+    });
+  }
+
+  private pickColsFromRows(tableMeta: Table, rows: Record<string, unknown>[]) {
+    const colsIds = tableMeta.columns.map((col) => col.id);
+
+    const rowsMatchedWithColumns = rows.map((row) => {
+      const filteredRow: TableRowDto = {
+        id: String(row.id),
+        data: {},
+      };
+
+      colsIds.forEach((colId) => {
+        filteredRow.data[colId] = row[colId];
+      });
+
+      return filteredRow;
+    });
+
+    return rowsMatchedWithColumns;
   }
 
   private createColId() {

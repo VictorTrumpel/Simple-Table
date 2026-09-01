@@ -158,9 +158,9 @@ class TableService {
     value: unknown,
   ) {
     try {
-      const { data } = await network.post(`/tables/${tableId}/set-cell-value`, {
-        row_id: rowId,
-        column_id: colId,
+      const { data } = await network.put(`/tables/${tableId}/set-cell-value`, {
+        rowId: rowId,
+        columnId: colId,
         value: value,
       });
 
