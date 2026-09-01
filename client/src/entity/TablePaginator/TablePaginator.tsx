@@ -26,8 +26,6 @@ export const TablePaginator = ({
   onChangePaginationMeta,
   sx,
 }: TablePaginatorProps) => {
-  console.log('totalItems :>> ', totalItems);
-
   const handlePageNext = () => {
     if (page * pageSize < totalItems) {
       onChangePaginationMeta({ pageSize, page: page + 1 });
