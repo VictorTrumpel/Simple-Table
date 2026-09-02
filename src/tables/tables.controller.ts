@@ -23,10 +23,14 @@ import { SetCellValueDto } from './dto/SetCellValueDto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateTableFormDataDto } from './dto/CreateTableFormDataDto';
 import { ReadQueryTableDto } from './dto/ReadQueryTableDto';
+import { TableColumnsService } from './services/tableColumns.service';
 
 @Controller('tables')
 export class TablesController {
-  constructor(private readonly tablesService: TablesService) {}
+  constructor(
+    private readonly tablesService: TablesService,
+    private readonly tableColumnsService: TableColumnsService,
+  ) {}
 
   @Post('/create')
   create(@Body() createTableDto: CreateTableDto) {
@@ -54,7 +58,7 @@ export class TablesController {
 
   @Post('/add-column')
   addColumn(@Body() addColumnDto: AddColumnDto) {
-    return this.tablesService.addColumn(addColumnDto);
+    return this.tableColumnsService.addColumn(addColumnDto);
   }
 
   @Delete('/delete/:tableId/:colId')
@@ -63,12 +67,12 @@ export class TablesController {
     @Param('tableId') tableId: string,
     @Param('colId') colId: string,
   ) {
-    return this.tablesService.deleteColumn(tableId, colId);
+    return this.tableColumnsService.deleteColumn(tableId, colId);
   }
 
   @Put('/edit-column')
   editColumn(@Body() editColumnDto: EditColumnDto) {
-    return this.tablesService.editColumn(editColumnDto);
+    return this.tableColumnsService.editColumn(editColumnDto);
   }
 
   @Post('/:tableId/add-row')

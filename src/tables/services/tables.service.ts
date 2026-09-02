@@ -95,35 +95,6 @@ export class TablesService {
     }
   }
 
-  async addColumn(addColumn: AddColumnDto) {
-    return await this.tablesRepository.manager.transaction(async (manager) => {
-      const repository = manager.getRepository(Table);
-
-      const table = await this.findTableOrThrowExeption(
-        addColumn.tableId,
-        repository,
-        false,
-      );
-
-      const newColumn = {
-        id: this.createColId(),
-        ...addColumn.column,
-      };
-
-      const userTable = this.createUserTableRepository(
-        this.tablesRepository.manager,
-      );
-
-      await userTable.addCol(table.id, newColumn.id);
-
-      table.columns = [...table.columns, newColumn];
-
-      await repository.save(table);
-
-      return newColumn;
-    });
-  }
-
   async addRow(addRowDto: AddRowDto) {
     const table = await this.findTableOrThrowExeption(
       addRowDto.tableId,
@@ -194,73 +165,6 @@ export class TablesService {
       }
 
       return { deletedCount: deletedRowsIds.size };
-    });
-  }
-
-  async deleteColumn(tableId: string, columnIdForDelete: string) {
-    return await this.tablesRepository.manager.transaction(async (manager) => {
-      const repository = manager.getRepository(Table);
-
-      const table = await this.findTableOrThrowExeption(tableId, repository);
-
-      const currentColumns = table.columns;
-
-      const column = currentColumns.find((c) => c.id === columnIdForDelete);
-
-      if (!column) {
-        throw new NotFoundException({
-          message: `Колонка с id ${columnIdForDelete} не найдена`,
-        });
-      }
-
-      const userTableRepository = this.createUserTableRepository(manager);
-      await userTableRepository.deleteColFromUserTableQuery(
-        tableId,
-        columnIdForDelete,
-      );
-
-      table.columns = table.columns.filter((c) => c.id !== columnIdForDelete);
-
-      await manager.save(Table, table);
-    });
-  }
-
-  async editColumn(editColumnDto: EditColumnDto) {
-    return this.tablesRepository.manager.transaction(async (manager) => {
-      const repository = manager.getRepository(Table);
-
-      const table = await this.findTableOrThrowExeption(
-        editColumnDto.tableId,
-        repository,
-      );
-
-      const currentColumns = table.columns;
-
-      const column = currentColumns.find(
-        (c) => c.id === editColumnDto.column.id,
-      );
-
-      if (!column) {
-        throw new NotFoundException({
-          message: `Колонка с id ${editColumnDto.column.id} не найдена`,
-        });
-      }
-
-      const updatedColumn = {
-        ...column,
-        ...editColumnDto.column,
-      };
-
-      table.columns = table.columns.map((col) => {
-        if (col.id === updatedColumn.id) {
-          return updatedColumn;
-        }
-        return col;
-      });
-
-      await manager.save(Table, table);
-
-      return updatedColumn;
     });
   }
 
