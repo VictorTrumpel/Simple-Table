@@ -24,12 +24,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateTableFormDataDto } from './dto/CreateTableFormDataDto';
 import { ReadQueryTableDto } from './dto/ReadQueryTableDto';
 import { TableColumnsService } from './services/tableColumns.service';
+import { TableRowsService } from './services/tableRows.service';
 
 @Controller('tables')
 export class TablesController {
   constructor(
     private readonly tablesService: TablesService,
     private readonly tableColumnsService: TableColumnsService,
+    private readonly tableRowsService: TableRowsService,
   ) {}
 
   @Post('/create')
@@ -77,7 +79,7 @@ export class TablesController {
 
   @Post('/:tableId/add-row')
   addRow(@Body() addRowDto: AddRowDto) {
-    return this.tablesService.addRow(addRowDto);
+    return this.tableRowsService.addRow(addRowDto);
   }
 
   @Post('/:tableId/delete-rows')
@@ -86,7 +88,7 @@ export class TablesController {
     @Param('tableId') tableId: string,
     @Body() deleteRowsDto: DeleteRowsDto,
   ) {
-    return this.tablesService.deleteRows(tableId, deleteRowsDto);
+    return this.tableRowsService.deleteRows(tableId, deleteRowsDto);
   }
 
   @Put('/:tableId/set-cell-value')

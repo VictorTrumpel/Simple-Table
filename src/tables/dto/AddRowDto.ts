@@ -1,5 +1,8 @@
 import { IsDefined, IsNotEmpty, IsObject, IsString } from 'class-validator';
 
+type ColId = string;
+type ColData = unknown;
+
 export class AddRowDto {
   @IsString()
   @IsNotEmpty()
@@ -7,5 +10,5 @@ export class AddRowDto {
 
   @IsDefined()
   @IsObject()
-  data!: Record<string, unknown>;
+  data!: Record<ColId, ColData>;
 }

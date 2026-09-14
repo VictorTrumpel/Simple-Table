@@ -8,11 +8,9 @@ import { Repository, EntityManager } from 'typeorm';
 import { Table } from '../entities/table.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { AddColumnDto } from '../dto/AddColumnDto';
 import { AddRowDto } from '../dto/AddRowDto';
 import { GetTableDto, TableRowDto } from '../dto/GetTableDto';
 import { DeleteRowsDto } from '../dto/DeleteRowsDto';
-import { EditColumnDto } from '../dto/EditColumnDto';
 import { UserTable } from '../entities/userTable.entity';
 import { ExcleReaderService } from './excelReader.service';
 import { ReadQueryTableDto } from '../dto/ReadQueryTableDto';
@@ -93,79 +91,6 @@ export class TablesService {
     if (result.affected === 0) {
       throw new NotFoundException('Таблица не найдена');
     }
-  }
-
-  async addRow(addRowDto: AddRowDto) {
-    const table = await this.findTableOrThrowExeption(
-      addRowDto.tableId,
-      this.tablesRepository,
-      false,
-    );
-
-    const tableColumns = table.columns;
-
-    const allowedColumnsIds = new Set(tableColumns.map((col) => col.id));
-
-    const updatedColIds = Object.keys(addRowDto.data);
-
-    const invalidCols = updatedColIds.filter(
-      (colId) => !allowedColumnsIds.has(colId),
-    );
-
-    if (invalidCols.length > 0) {
-      throw new BadRequestException({
-        message: 'Переданы неизвестные колонки',
-        columns: invalidCols,
-      });
-    }
-
-    if (updatedColIds.length === 0) {
-      throw new BadRequestException({
-        message: 'Строка не содержит данных',
-      });
-    }
-
-    const manager = this.tablesRepository.manager;
-    const colValues = updatedColIds.map((colId) => addRowDto.data[colId]);
-
-    const userTable = this.createUserTableRepository(manager);
-    const newRow = await userTable.addRowToUserTableQuery(
-      table.id,
-      updatedColIds,
-      colValues,
-    );
-
-    return newRow;
-  }
-
-  async deleteRows(tableId: string, deleteRowsDto: DeleteRowsDto) {
-    return await this.tablesRepository.manager.transaction(async (manager) => {
-      const repository = manager.getRepository(Table);
-
-      const table = await this.findTableOrThrowExeption(tableId, repository);
-
-      const userTableRepository = this.createUserTableRepository(manager);
-      const deletedRows =
-        await userTableRepository.deleteRowsFromUserTableQuery(
-          table.id,
-          deleteRowsDto.rowIds,
-        );
-
-      const deletedRowsIds = new Set(deletedRows.map((r) => r.id));
-
-      const missingIds = deleteRowsDto.rowIds.filter(
-        (id) => !deletedRowsIds.has(id),
-      );
-
-      if (missingIds.length > 0) {
-        throw new NotFoundException({
-          message: 'Удаляемых строк не существует',
-          rows: missingIds,
-        });
-      }
-
-      return { deletedCount: deletedRowsIds.size };
-    });
   }
 
   importTableFromExcel(
