@@ -25,6 +25,7 @@ import { CreateTableFormDataDto } from './dto/CreateTableFormDataDto';
 import { ReadQueryTableDto } from './dto/ReadQueryTableDto';
 import { TableColumnsService } from './services/tableColumns.service';
 import { TableRowsService } from './services/tableRows.service';
+import { TableCellService } from './services/tableCell.service';
 
 @Controller('tables')
 export class TablesController {
@@ -32,6 +33,7 @@ export class TablesController {
     private readonly tablesService: TablesService,
     private readonly tableColumnsService: TableColumnsService,
     private readonly tableRowsService: TableRowsService,
+    private readonly tableCellService: TableCellService,
   ) {}
 
   @Post('/create')
@@ -41,7 +43,7 @@ export class TablesController {
 
   @Get('/:tableId/info')
   getMetadata(@Param('tableId') tableId: string) {
-    return this.tablesService.getTableMetadataById(tableId);
+    return this.tablesService.getTable(tableId);
   }
 
   @Get('/:tableId')
@@ -96,7 +98,7 @@ export class TablesController {
     @Param('tableId') tableId: string,
     @Body() setCellValueDto: SetCellValueDto,
   ) {
-    return this.tablesService.setCellValue(tableId, setCellValueDto);
+    return this.tableCellService.setCellValue(tableId, setCellValueDto);
   }
 
   @Post('/import')

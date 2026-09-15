@@ -7,6 +7,7 @@ import { ExcleReaderService } from './services/excelReader.service';
 import { TableColumnsService } from './services/tableColumns.service';
 import { DynTableFactory } from './repository/dynTable.repository';
 import { TableRowsService } from './services/tableRows.service';
+import { TableCellService } from './services/tableCell.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Table])],
@@ -17,6 +18,7 @@ import { TableRowsService } from './services/tableRows.service';
     TableColumnsService,
     TableRowsService,
     DynTableFactory,
+    TableCellService,
   ],
 })
 export class TablesModule {}

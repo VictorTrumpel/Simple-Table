@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AddColumnDto } from '../dto/AddColumnDto';
 import { Table } from '../entities/table.entity';
-import { randomUUID } from 'node:crypto';
-import { DataSource, EntityManager } from 'typeorm';
+import { createColId } from '../utils/createColId';
+import { DataSource } from 'typeorm';
 import { DynTableFactory } from '../repository/dynTable.repository';
 import { EditColumnDto } from '../dto/EditColumnDto';
+import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 
 @Injectable()
 export class TableColumnsService {
@@ -17,11 +18,11 @@ export class TableColumnsService {
     return this.dataSource.transaction(async (manager) => {
       const { tableId } = addColumnDto;
 
-      const tableMeta = await this.findTableOrTrhow(tableId, manager);
+      const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const newColumn = {
         ...addColumnDto.column,
-        id: this.createColId(),
+        id: createColId(),
       };
 
       const dynTableRepository = this.dynTableFactory.create(manager);
@@ -39,7 +40,7 @@ export class TableColumnsService {
     return this.dataSource.transaction(async (manager) => {
       const { tableId, column: columnPatch } = editColumnDto;
 
-      const tableMeta = await this.findTableOrTrhow(tableId, manager);
+      const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const columnNeedToPatch = tableMeta.columns.find(
         (c) => c.id === columnPatch.id,
@@ -70,7 +71,7 @@ export class TableColumnsService {
 
   deleteColumn(tableId: string, colId: string) {
     return this.dataSource.transaction(async (manager) => {
-      const tableMeta = await this.findTableOrTrhow(tableId, manager);
+      const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const columnNeedToDelete = tableMeta.columns.find((c) => c.id === colId);
 
@@ -96,27 +97,5 @@ export class TableColumnsService {
         columns: updatedColumns,
       });
     });
-  }
-
-  private async findTableOrTrhow(
-    tableId: string,
-    entityManager: EntityManager,
-  ) {
-    const tableMeta = await entityManager.findOne(Table, {
-      where: { id: tableId },
-      lock: { mode: 'pessimistic_write' },
-    });
-
-    if (!tableMeta) {
-      throw new NotFoundException({
-        message: `Table with id: ${tableId} does not exist`,
-      });
-    }
-
-    return tableMeta;
-  }
-
-  private createColId() {
-    return `c_${randomUUID().replaceAll('-', '')}`;
   }
 }

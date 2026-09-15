@@ -1,13 +1,13 @@
 import { AddRowDto } from '../dto/AddRowDto';
-import { Table } from '../entities/table.entity';
 import {
   NotFoundException,
   BadRequestException,
   Injectable,
 } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { DynTableFactory } from '../repository/dynTable.repository';
 import { DeleteRowsDto } from '../dto/DeleteRowsDto';
+import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 
 @Injectable()
 export class TableRowsService {
@@ -20,7 +20,7 @@ export class TableRowsService {
     return this.dataSource.transaction(async (manager) => {
       const { tableId } = addRowDto;
 
-      const tableMeta = await this.findTableOrTrhow(tableId, manager);
+      const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const tableColumns = tableMeta.columns;
 
@@ -63,7 +63,7 @@ export class TableRowsService {
     return this.dataSource.transaction(async (manager) => {
       const { rowIds } = deleteRowsDto;
 
-      const tableMeta = await this.findTableOrTrhow(tableId, manager);
+      const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const dynTableRepository = this.dynTableFactory.create(manager);
 
@@ -87,23 +87,5 @@ export class TableRowsService {
 
       return { deletedCount: deletedRows.length };
     });
-  }
-
-  private async findTableOrTrhow(
-    tableId: string,
-    entityManager: EntityManager,
-  ) {
-    const tableMeta = await entityManager.findOne(Table, {
-      where: { id: tableId },
-      lock: { mode: 'pessimistic_write' },
-    });
-
-    if (!tableMeta) {
-      throw new NotFoundException({
-        message: `Table with id: ${tableId} does not exist`,
-      });
-    }
-
-    return tableMeta;
   }
 }
