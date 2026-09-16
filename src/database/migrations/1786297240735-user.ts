@@ -2,9 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class User1786297240735 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-        create table if not exists users
-        (
+    await queryRunner.query(/*sql*/ `
+        create table if not exists users (
             id         serial primary key,
             name       text      not null,
             email      text      not null,
@@ -16,7 +15,7 @@ export class User1786297240735 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
+    await queryRunner.query(/*sql*/ `
         DROP TABLE IF EXISTS users;
     `);
   }
