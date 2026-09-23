@@ -9,9 +9,7 @@ class ChangeLogService {
     tableId: string,
   ): Promise<Response<GetChangeItemDTO[]>> {
     try {
-      const { data } = await network.post(`/changelog/table`, {
-        table_id: tableId,
-      });
+      const { data } = await network.get(`/changelog/table/${tableId}`);
 
       return { data: camelcaseKeys(data, { deep: true }), error: null };
     } catch (error) {

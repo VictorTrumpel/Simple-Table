@@ -8,9 +8,10 @@ import { TableColumnsService } from './services/tableColumns.service';
 import { DynTableFactory } from './repository/dynTable.repository';
 import { TableRowsService } from './services/tableRows.service';
 import { TableCellService } from './services/tableCell.service';
+import { ChangelogModule } from 'src/changelog/changelog.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Table])],
+  imports: [TypeOrmModule.forFeature([Table]), ChangelogModule],
   controllers: [TablesController],
   providers: [
     TablesService,

@@ -1,4 +1,4 @@
-import type { GetChangeItemDTO } from "@shared/network";
+import type { GetChangeItemDTO } from '@shared/network';
 import {
   Box,
   Typography,
@@ -9,11 +9,11 @@ import {
   DialogContent,
   DialogActions,
   Button,
-} from "@mui/material";
-import { ChangeDiagram } from "@entity";
-import { format } from "date-fns";
-import { useBoolean } from "react-use";
-import LaunchIcon from "@mui/icons-material/Launch";
+} from '@mui/material';
+import { ChangeDiagram } from '@entity';
+import { format } from 'date-fns';
+import { useBoolean } from 'react-use';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 export const ChangeView = ({ item }: { item: GetChangeItemDTO }) => {
   const { palette } = useTheme();
@@ -31,22 +31,23 @@ export const ChangeView = ({ item }: { item: GetChangeItemDTO }) => {
 
   const formatDate = (date: string) => {
     try {
-      return format(new Date(date).getTime(), "yyyy-mm-dd hh:mm:ss");
+      return format(new Date(date).getTime(), 'dd.mm.yyyy hh:mm:ss');
     } catch {
-      return "";
+      return '';
     }
   };
 
   const getChageMessage = () => {
     const entityMatcher = {
-      row: "Строка",
-      column: "Колонка",
+      table: 'Таблица',
+      row: 'Строка',
+      column: 'Колонка',
     };
 
     const actionMatcher = {
-      add: "добавлена",
-      update: "обновлена",
-      delete: "удалена",
+      add: 'добавлена',
+      update: 'обновлена',
+      delete: 'удалена',
     };
 
     return `${entityMatcher[item.changedEntity]} ${
@@ -60,7 +61,7 @@ export const ChangeView = ({ item }: { item: GetChangeItemDTO }) => {
         <Box display="flex" alignItems="center" gap={1}>
           <Typography
             color={
-              item.changeType === "delete"
+              item.changeType === 'delete'
                 ? palette.error.dark
                 : palette.success.dark
             }

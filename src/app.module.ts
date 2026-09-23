@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { DatabasesModule } from './databases/databases.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TablesModule } from './tables/tables.module';
+import { ChangelogModule } from './changelog/changelog.module';
 
 @Module({
   imports: [
@@ -30,8 +29,7 @@ import { TablesModule } from './tables/tables.module';
     AuthModule,
     DatabasesModule,
     TablesModule,
+    ChangelogModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

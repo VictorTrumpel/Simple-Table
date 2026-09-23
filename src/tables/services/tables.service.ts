@@ -13,6 +13,7 @@ import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { DataSource } from 'typeorm';
 import { createColId } from '../utils/createColId';
 import { createTableId } from '../utils/createTableId';
+import { ChangelogService } from 'src/changelog/changelog.service';
 
 @Injectable()
 export class TablesService {
@@ -22,9 +23,10 @@ export class TablesService {
     private readonly excelReaderService: ExcleReaderService,
     private readonly dynTableFactory: DynTableFactory,
     private readonly dataSource: DataSource,
+    private readonly changelogService: ChangelogService,
   ) {}
 
-  async create(createTableDto: CreateTableDto) {
+  async create(createTableDto: CreateTableDto, userId: number) {
     return this.tablesRepository.manager.transaction(async (manager) => {
       const tableUuid = `t_${randomUUID().replaceAll('-', '')}`;
 
@@ -40,6 +42,11 @@ export class TablesService {
 
       await dynTableRepository.createTable(table);
       await dynTableRepository.createSortIndex(table.id);
+
+      await this.changelogService.recordTableWasAdded(manager, {
+        userId,
+        tableId: tableUuid,
+      });
 
       return table;
     });

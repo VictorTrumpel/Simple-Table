@@ -8,15 +8,18 @@ import { DataSource } from 'typeorm';
 import { DynTableFactory } from '../repository/dynTable.repository';
 import { DeleteRowsDto } from '../dto/DeleteRowsDto';
 import { findTableOrTrhow } from '../utils/findTableOrTrhow';
+import { ChangeRowItemDTO } from 'src/changelog/dto/ChangeRecord';
+import { ChangelogService } from 'src/changelog/changelog.service';
 
 @Injectable()
 export class TableRowsService {
   constructor(
     private dataSource: DataSource,
     private dynTableFactory: DynTableFactory,
+    private changelogSerivce: ChangelogService,
   ) {}
 
-  async addRow(addRowDto: AddRowDto) {
+  async addRow(addRowDto: AddRowDto, userId: string) {
     return this.dataSource.transaction(async (manager) => {
       const { tableId } = addRowDto;
 
@@ -54,6 +57,26 @@ export class TableRowsService {
         updatedColIds,
         colValues,
       );
+
+      const colIdMapName = new Map(
+        tableColumns.map(({ id, name }) => [id, name]),
+      );
+
+      const changeRecord: ChangeRowItemDTO[] = updatedColIds.map((colId) => {
+        const colName = colIdMapName.get(colId);
+        const colValue = newRow[colId];
+        return {
+          columnID: colId,
+          columnName: String(colName),
+          value: String(colValue),
+        };
+      });
+
+      await this.changelogSerivce.recordRowsWasAdded(manager, changeRecord, {
+        userId,
+        rowId: String(newRow.id),
+        tableId: tableId,
+      });
 
       return newRow;
     });

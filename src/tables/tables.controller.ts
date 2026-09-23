@@ -26,6 +26,7 @@ import { ReadQueryTableDto } from './dto/ReadQueryTableDto';
 import { TableColumnsService } from './services/tableColumns.service';
 import { TableRowsService } from './services/tableRows.service';
 import { TableCellService } from './services/tableCell.service';
+import { CurrentUserId } from 'src/auth/decorators/CurrentUserId';
 
 @Controller('tables')
 export class TablesController {
@@ -37,8 +38,11 @@ export class TablesController {
   ) {}
 
   @Post('/create')
-  create(@Body() createTableDto: CreateTableDto) {
-    return this.tablesService.create(createTableDto);
+  create(
+    @Body() createTableDto: CreateTableDto,
+    @CurrentUserId() userId: number,
+  ) {
+    return this.tablesService.create(createTableDto, userId);
   }
 
   @Get('/:tableId/info')
@@ -80,8 +84,8 @@ export class TablesController {
   }
 
   @Post('/:tableId/add-row')
-  addRow(@Body() addRowDto: AddRowDto) {
-    return this.tableRowsService.addRow(addRowDto);
+  addRow(@Body() addRowDto: AddRowDto, @CurrentUserId() userId: string) {
+    return this.tableRowsService.addRow(addRowDto, userId);
   }
 
   @Post('/:tableId/delete-rows')

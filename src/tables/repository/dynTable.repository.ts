@@ -46,7 +46,7 @@ export class DynTableRepository {
   }
 
   async addRow(tableId: string, colIds: string[], colValues: unknown[]) {
-    const [newRow] = await this.entityManager.query<TableRowDto[]>(
+    const [newRow] = await this.entityManager.query<Record<string, unknown>[]>(
       /*sql*/ `
       INSERT INTO "${this.tableSpace}"."${tableId}" (${colIds.join(',')})
       VALUES (${colValues.map((_, idx) => `$${idx + 1}`).join(',')})
@@ -86,7 +86,7 @@ export class DynTableRepository {
 
   createSortIndex(tableId: string) {
     return this.entityManager.query<void>(/*sql*/ `
-      CREATE INDEX IF NOT EXIST ${tableId}_order_idx
+      CREATE INDEX IF NOT EXISTS ${tableId}_order_idx
       ON ${this.tableSpace}.${tableId} (
         sort_index asc,
         sort_index_version desc
