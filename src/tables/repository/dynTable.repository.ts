@@ -59,7 +59,7 @@ export class DynTableRepository {
   }
 
   async getRows(tableId: string, rowIds: string[]) {
-    return this.entityManager.query<{ id: string }[]>(
+    return this.entityManager.query<Record<string, unknown>[]>(
       /*sql*/ `
       SELECT * 
       FROM "${this.tableSpace}"."${tableId}"

@@ -18,3 +18,9 @@ export type ChangeRecord = {
   beforeRow: null | ChangeRowItemDTO[];
   afterRow: null | ChangeRowItemDTO[];
 };
+
+export type ChangeEntity = {
+  tableId: string;
+  userId: string;
+  rowId: string;
+};

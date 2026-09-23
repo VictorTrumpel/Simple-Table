@@ -3,6 +3,7 @@ import { EntityManager } from 'typeorm';
 import { ChangeRecord } from './dto/ChangeRecord';
 import { TableWasAddedDto } from './dto/TableWasAddedDto';
 import { ChangeRowItemDTO } from './dto/ChangeRecord';
+import { ChangeEntity } from './dto/ChangeRecord';
 
 @Injectable()
 export class ChangelogService {
@@ -35,12 +36,8 @@ export class ChangelogService {
 
   async recordRowsWasAdded(
     entityManager: EntityManager,
-    addedRowsDto: ChangeRowItemDTO[],
-    changeEntity: {
-      userId: string;
-      tableId: string;
-      rowId: string;
-    },
+    afterRow: ChangeRowItemDTO[],
+    changeEntity: ChangeEntity,
   ) {
     const { userId, tableId, rowId } = changeEntity;
 
@@ -49,18 +46,28 @@ export class ChangelogService {
       beforeColumn: null,
       afterColumn: null,
       beforeRow: null,
-      afterRow: addedRowsDto,
+      afterRow,
     };
 
-    await entityManager.query(
-      /*sql*/ `
-      INSERT INTO changelog 
-        (target, user_id, table_id, column_id, row_id, change, changed_at)
-      VALUES
-        ('row', $1, $2, NULL, $3, $4, NOW())
-    `,
-      [userId, tableId, rowId, change],
-    );
+    await this.recordRowChange(entityManager, userId, tableId, rowId, change);
+  }
+
+  async recordRowWasDeleted(
+    entityManager: EntityManager,
+    beforeRow: ChangeRowItemDTO[],
+    changeEntity: ChangeEntity,
+  ) {
+    const { userId, tableId, rowId } = changeEntity;
+
+    const change: ChangeRecord = {
+      changeType: 'delete',
+      beforeColumn: null,
+      afterColumn: null,
+      beforeRow: beforeRow,
+      afterRow: null,
+    };
+
+    await this.recordRowChange(entityManager, userId, tableId, rowId, change);
   }
 
   async getTableChangeList(tableId: string) {
@@ -96,5 +103,23 @@ export class ChangelogService {
     );
 
     return chageListWithUser;
+  }
+
+  private async recordRowChange(
+    entityManager: EntityManager,
+    userId: string,
+    tableId: string,
+    rowId: string,
+    change: ChangeRecord,
+  ) {
+    await entityManager.query(
+      /*sql*/ `
+      INSERT INTO changelog 
+        (target, user_id, table_id, column_id, row_id, change, changed_at)
+      VALUES
+        ('row', $1, $2, NULL, $3, $4, NOW())
+    `,
+      [userId, tableId, rowId, change],
+    );
   }
 }

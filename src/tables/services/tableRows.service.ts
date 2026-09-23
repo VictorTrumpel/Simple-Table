@@ -82,7 +82,11 @@ export class TableRowsService {
     });
   }
 
-  async deleteRows(tableId: string, deleteRowsDto: DeleteRowsDto) {
+  async deleteRows(
+    tableId: string,
+    deleteRowsDto: DeleteRowsDto,
+    userId: string,
+  ) {
     return this.dataSource.transaction(async (manager) => {
       const { rowIds } = deleteRowsDto;
 
@@ -107,6 +111,29 @@ export class TableRowsService {
         tableMeta.id,
         rowIds,
       );
+
+      const colIdMapToName = new Map(
+        tableMeta.columns.map((col) => [col.id, col.name]),
+      );
+
+      for (const row of existRows) {
+        const rowChange: ChangeRowItemDTO[] = [];
+
+        for (const columnID in row) {
+          if (colIdMapToName.has(columnID)) {
+            const columnName =
+              colIdMapToName.get(columnID) ?? 'unknown_column_name';
+            const value = String(row[columnID]);
+            rowChange.push({ columnID, columnName, value });
+          }
+        }
+
+        await this.changelogSerivce.recordRowWasDeleted(manager, rowChange, {
+          tableId,
+          rowId: String(row.id),
+          userId,
+        });
+      }
 
       return { deletedCount: deletedRows.length };
     });

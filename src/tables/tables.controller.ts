@@ -93,8 +93,9 @@ export class TablesController {
   deleteRows(
     @Param('tableId') tableId: string,
     @Body() deleteRowsDto: DeleteRowsDto,
+    @CurrentUserId() userId: string,
   ) {
-    return this.tableRowsService.deleteRows(tableId, deleteRowsDto);
+    return this.tableRowsService.deleteRows(tableId, deleteRowsDto, userId);
   }
 
   @Put('/:tableId/set-cell-value')
