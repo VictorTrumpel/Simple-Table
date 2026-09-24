@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { DynTableFactory } from '../repository/dynTable.repository';
 import { SetCellValueDto } from '../dto/SetCellValueDto';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { pickColsFromRows } from '../utils/pickColsFromRows';
 import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { ChangelogService } from 'src/changelog/changelog.service';
+import { ChangeRowItemDTO } from 'src/changelog/dto/ChangeRecord';
 
 @Injectable()
 export class TableCellService {
@@ -64,7 +65,44 @@ export class TableCellService {
         userId,
       );
 
+      const colIdMapname = new Map(table.columns.map((c) => [c.id, c.name]));
+
+      const beforeRow: ChangeRowItemDTO[] = table.columns.map((c) => {
+        return {
+          columnID: c.id,
+          columnName: String(colIdMapname.get(c.id)),
+          value: String(prevRow[c.id]),
+        };
+      });
+
       const rows = pickColsFromRows(table, updatedRows);
+
+      const updatedRow = rows[0];
+
+      if (!updatedRow) {
+        throw new ConflictException({
+          message: `row with id ${setCellValue.rowId} does not exist`,
+        });
+      }
+
+      const afterRow: ChangeRowItemDTO[] = table.columns.map((c) => {
+        return {
+          columnID: c.id,
+          columnName: String(colIdMapname.get(c.id)),
+          value: String(updatedRow.data[c.id]),
+        };
+      });
+
+      await this.changelogService.recordRowWasUpdated(
+        manager,
+        {
+          rowId: setCellValue.rowId,
+          tableId: table.id,
+          beforeRow,
+          afterRow,
+        },
+        userId,
+      );
 
       return { rows };
     });

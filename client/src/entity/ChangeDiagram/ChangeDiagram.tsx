@@ -2,22 +2,22 @@ import type {
   GetChangeItemDTO,
   ChangeRowItemDTO,
   ChangeColumnItem,
-} from "@shared/network";
-import { Box, Typography, useTheme } from "@mui/material";
+} from '@shared/network';
+import { Box, Typography, useTheme, styled } from '@mui/material';
 
 const BeforeRows = ({
   beforeRows,
   color,
 }: {
-  beforeRows: ChangeRowItemDTO[];
-  color: string;
+  beforeRows: (ChangeRowItemDTO & { cellColor?: string })[];
+  color?: string;
 }) => {
   return (
     <table border={1}>
       <thead>
         <tr>
-          {beforeRows.map(({ columnName }, idx) => (
-            <th key={idx} style={{ background: color }}>
+          {beforeRows.map(({ columnName, cellColor }, idx) => (
+            <th key={idx} style={{ background: cellColor ?? color }}>
               {columnName}
             </th>
           ))}
@@ -25,9 +25,11 @@ const BeforeRows = ({
       </thead>
 
       <tbody>
-        <tr style={{ background: color }}>
-          {beforeRows.map(({ value }, idx) => (
-            <td key={idx}>{value}</td>
+        <tr>
+          {beforeRows.map(({ value, cellColor }, idx) => (
+            <td key={idx} style={{ background: cellColor ?? color }}>
+              {value}
+            </td>
           ))}
         </tr>
       </tbody>
@@ -61,8 +63,40 @@ const CompareColumns = ({
   );
 };
 
+const RotatedRow = styled('span')({
+  transform: 'rotate(90deg)',
+});
+
 export const ChangeDiagram = ({ item }: { item: GetChangeItemDTO }) => {
   const { palette, alpha } = useTheme();
+
+  if (item.beforeRow instanceof Array && item.afterRow instanceof Array) {
+    const { beforeRow, afterRow } = item;
+
+    const beforeRowWithColor = beforeRow.map((beforeCol, idx) => {
+      const afterCol = afterRow[idx];
+
+      if (beforeCol.value === afterCol.value) return beforeCol;
+      return { ...beforeCol, cellColor: alpha(palette.error.light, 0.2) };
+    });
+
+    const afterRowWithColor = afterRow.map((afterCol, idx) => {
+      const beforeCol = beforeRow[idx];
+
+      if (beforeCol.value === afterCol.value) return afterCol;
+      return { ...afterCol, cellColor: alpha(palette.success.light, 0.2) };
+    });
+
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center">
+        <BeforeRows beforeRows={beforeRowWithColor || []} />
+
+        <RotatedRow>➜</RotatedRow>
+
+        <BeforeRows beforeRows={afterRowWithColor || []} />
+      </Box>
+    );
+  }
 
   if (item.beforeRow instanceof Array) {
     return (

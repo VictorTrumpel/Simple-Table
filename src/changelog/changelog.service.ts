@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { ChangeCellDTO, ChangeRecord } from './dto/ChangeRecord';
+import { ChangeCellDTO, ChangeRecord, UpdateRowDto } from './dto/ChangeRecord';
 import { TableWasAddedDto } from './dto/TableWasAddedDto';
 import { ChangeRowItemDTO } from './dto/ChangeRecord';
 import { ChangeEntity } from './dto/ChangeRecord';
@@ -74,6 +74,34 @@ export class ChangelogService {
     };
 
     await this.recordRowChange(entityManager, userId, tableId, rowId, change);
+  }
+
+  async recordRowWasUpdated(
+    entityManager: EntityManager,
+    updateRowDto: UpdateRowDto,
+    userId: string,
+  ) {
+    const { beforeRow, afterRow, tableId, rowId } = updateRowDto;
+
+    const change: ChangeRecord = {
+      changeType: 'update',
+      before: null,
+      after: null,
+      beforeColumn: null,
+      afterColumn: null,
+      beforeRow,
+      afterRow,
+    };
+
+    await entityManager.query(
+      /*sql*/ `
+      INSERT INTO changelog 
+        (target, user_id, table_id, column_id, row_id, change, changed_at)
+      VALUES
+        ('row', $1, $2, $3, $4, $5, NOW())
+    `,
+      [userId, tableId, null, rowId, change],
+    );
   }
 
   async recordCellWasChanged(

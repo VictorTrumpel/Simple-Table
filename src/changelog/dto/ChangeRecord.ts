@@ -34,3 +34,10 @@ export type ChangeEntity = {
   userId: string;
   rowId: string;
 };
+
+export type UpdateRowDto = {
+  rowId: string;
+  tableId: string;
+  beforeRow: null | ChangeRowItemDTO[];
+  afterRow: null | ChangeRowItemDTO[];
+};
