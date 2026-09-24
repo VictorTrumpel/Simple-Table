@@ -53,7 +53,7 @@ export class TableColumnsService {
     });
   }
 
-  editColumn(editColumnDto: EditColumnDto) {
+  editColumn(editColumnDto: EditColumnDto, userId: string) {
     return this.dataSource.transaction(async (manager) => {
       const { tableId, column: columnPatch } = editColumnDto;
 
@@ -79,10 +79,33 @@ export class TableColumnsService {
         return c;
       });
 
-      return manager.save(Table, {
+      const newTable = manager.save(Table, {
         ...tableMeta,
         columns: updatedColumns,
       });
+
+      await this.changelogService.recordColWasUpdated(
+        manager,
+        {
+          tableId: tableMeta.id,
+          colId: columnNeedToPatch.id,
+          beforeColumn: {
+            name: columnNeedToPatch.name,
+            type: columnNeedToPatch.type,
+            id: columnNeedToPatch.id,
+            enum: null,
+          },
+          afterColumn: {
+            name: updatedColumn.name,
+            type: updatedColumn.type,
+            id: updatedColumn.id,
+            enum: null,
+          },
+        },
+        userId,
+      );
+
+      return newTable;
     });
   }
 

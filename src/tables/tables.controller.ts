@@ -83,8 +83,11 @@ export class TablesController {
   }
 
   @Put('/edit-column')
-  editColumn(@Body() editColumnDto: EditColumnDto) {
-    return this.tableColumnsService.editColumn(editColumnDto);
+  editColumn(
+    @Body() editColumnDto: EditColumnDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.tableColumnsService.editColumn(editColumnDto, userId);
   }
 
   @Post('/:tableId/add-row')

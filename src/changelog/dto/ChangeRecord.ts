@@ -53,3 +53,10 @@ export type DeleteColRecordDto = {
   colId: string;
   beforeColumn: ChangeColumnItem;
 };
+
+export type UpdatedColRecordDto = {
+  tableId: string;
+  colId: string;
+  afterColumn: ChangeColumnItem;
+  beforeColumn: ChangeColumnItem;
+};

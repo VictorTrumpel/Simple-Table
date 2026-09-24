@@ -5,6 +5,7 @@ import {
   ChangeCellDTO,
   ChangeRecord,
   DeleteColRecordDto,
+  UpdatedColRecordDto,
   UpdateRowDto,
 } from './dto/ChangeRecord';
 import { TableWasAddedDto } from './dto/TableWasAddedDto';
@@ -179,6 +180,34 @@ export class ChangelogService {
       after: null,
       beforeColumn,
       afterColumn: null,
+      beforeRow: null,
+      afterRow: null,
+    };
+
+    await entityManager.query(
+      /*sql*/ `
+      INSERT INTO changelog 
+        (target, user_id, table_id, column_id, row_id, change, changed_at)
+      VALUES
+        ('column', $1, $2, $3, NULL, $4, NOW())
+    `,
+      [userId, tableId, colId, change],
+    );
+  }
+
+  async recordColWasUpdated(
+    entityManager: EntityManager,
+    updatedColRecordDto: UpdatedColRecordDto,
+    userId: string,
+  ) {
+    const { tableId, beforeColumn, afterColumn, colId } = updatedColRecordDto;
+
+    const change: ChangeRecord = {
+      changeType: 'update',
+      before: null,
+      after: null,
+      beforeColumn,
+      afterColumn,
       beforeRow: null,
       afterRow: null,
     };
