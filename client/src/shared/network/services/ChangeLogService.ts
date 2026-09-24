@@ -19,11 +19,9 @@ class ChangeLogService {
 
   async getCellChanges(tableId: string, columnId: string, rowId: string) {
     try {
-      const { data } = await network.post(`/changelog/cell`, {
-        table_id: tableId,
-        column_id: columnId,
-        row_id: rowId,
-      });
+      const { data } = await network.get(
+        `/changelog/cell/${tableId}/${rowId}/${columnId}`,
+      );
 
       return { data: camelcaseKeys(data, { deep: true }), error: null };
     } catch (error) {

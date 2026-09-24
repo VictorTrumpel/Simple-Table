@@ -9,4 +9,13 @@ export class ChangelogController {
   getTableChanges(@Param('tableId') tableId: string) {
     return this.changelogService.getTableChangeList(tableId);
   }
+
+  @Get('cell/:tableId/:rowId/:columnId')
+  getCellChanges(
+    @Param('tableId') tableId: string,
+    @Param('rowId') rowId: string,
+    @Param('columnId') columnId: string,
+  ) {
+    return this.changelogService.getCellChangeList(tableId, rowId, columnId);
+  }
 }

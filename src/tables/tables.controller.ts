@@ -102,8 +102,9 @@ export class TablesController {
   setCellValue(
     @Param('tableId') tableId: string,
     @Body() setCellValueDto: SetCellValueDto,
+    @CurrentUserId() userId: string,
   ) {
-    return this.tableCellService.setCellValue(tableId, setCellValueDto);
+    return this.tableCellService.setCellValue(tableId, setCellValueDto, userId);
   }
 
   @Post('/import')

@@ -11,8 +11,18 @@ export type ChangeRowItemDTO = {
   value: string;
 };
 
+export type ChangeCellDTO = {
+  before: string;
+  after: string;
+  columnId: string;
+  rowId: string;
+  tableId: string;
+};
+
 export type ChangeRecord = {
   changeType: 'add' | 'delete' | 'update';
+  before: null | string;
+  after: null | string;
   beforeColumn: null | ChangeColumnItem;
   afterColumn: null | ChangeColumnItem;
   beforeRow: null | ChangeRowItemDTO[];
