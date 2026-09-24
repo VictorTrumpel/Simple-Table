@@ -6,15 +6,17 @@ import { DataSource } from 'typeorm';
 import { DynTableFactory } from '../repository/dynTable.repository';
 import { EditColumnDto } from '../dto/EditColumnDto';
 import { findTableOrTrhow } from '../utils/findTableOrTrhow';
+import { ChangelogService } from 'src/changelog/changelog.service';
 
 @Injectable()
 export class TableColumnsService {
   constructor(
     private dataSource: DataSource,
     private dynTableFactory: DynTableFactory,
+    private changelogService: ChangelogService,
   ) {}
 
-  async addColumn(addColumnDto: AddColumnDto) {
+  async addColumn(addColumnDto: AddColumnDto, userId: string) {
     return this.dataSource.transaction(async (manager) => {
       const { tableId } = addColumnDto;
 
@@ -28,6 +30,21 @@ export class TableColumnsService {
       const dynTableRepository = this.dynTableFactory.create(manager);
 
       await dynTableRepository.addColumn(tableMeta.id, newColumn.id);
+
+      await this.changelogService.recordColWasAdded(
+        manager,
+        {
+          tableId: tableMeta.id,
+          colId: newColumn.id,
+          afterColumn: {
+            id: newColumn.id,
+            name: newColumn.name,
+            type: newColumn.type,
+            enum: newColumn.enum,
+          },
+        },
+        userId,
+      );
 
       return manager.save(Table, {
         ...tableMeta,
@@ -69,7 +86,7 @@ export class TableColumnsService {
     });
   }
 
-  deleteColumn(tableId: string, colId: string) {
+  deleteColumn(tableId: string, colId: string, userId: string) {
     return this.dataSource.transaction(async (manager) => {
       const tableMeta = await findTableOrTrhow(tableId, manager);
 
@@ -92,10 +109,27 @@ export class TableColumnsService {
         (c) => c.id !== columnNeedToDelete.id,
       );
 
-      return manager.save(Table, {
+      const newTable = manager.save(Table, {
         ...tableMeta,
         columns: updatedColumns,
       });
+
+      await this.changelogService.recordColWasDeleted(
+        manager,
+        {
+          tableId: tableMeta.id,
+          colId: columnNeedToDelete.id,
+          beforeColumn: {
+            id: columnNeedToDelete.id,
+            name: columnNeedToDelete.name,
+            type: columnNeedToDelete.type,
+            enum: null,
+          },
+        },
+        userId,
+      );
+
+      return newTable;
     });
   }
 }

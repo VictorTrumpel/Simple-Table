@@ -65,8 +65,11 @@ export class TablesController {
   }
 
   @Post('/add-column')
-  addColumn(@Body() addColumnDto: AddColumnDto) {
-    return this.tableColumnsService.addColumn(addColumnDto);
+  addColumn(
+    @Body() addColumnDto: AddColumnDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.tableColumnsService.addColumn(addColumnDto, userId);
   }
 
   @Delete('/delete/:tableId/:colId')
@@ -74,8 +77,9 @@ export class TablesController {
   deleteColumn(
     @Param('tableId') tableId: string,
     @Param('colId') colId: string,
+    @CurrentUserId() userId: string,
   ) {
-    return this.tableColumnsService.deleteColumn(tableId, colId);
+    return this.tableColumnsService.deleteColumn(tableId, colId, userId);
   }
 
   @Put('/edit-column')

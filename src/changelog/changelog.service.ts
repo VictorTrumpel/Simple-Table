@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { ChangeCellDTO, ChangeRecord, UpdateRowDto } from './dto/ChangeRecord';
+import {
+  AddColRecordDto,
+  ChangeCellDTO,
+  ChangeRecord,
+  DeleteColRecordDto,
+  UpdateRowDto,
+} from './dto/ChangeRecord';
 import { TableWasAddedDto } from './dto/TableWasAddedDto';
 import { ChangeRowItemDTO } from './dto/ChangeRecord';
 import { ChangeEntity } from './dto/ChangeRecord';
@@ -129,6 +135,62 @@ export class ChangelogService {
         ('cell', $1, $2, $3, $4, $5, NOW())
     `,
       [userId, tableId, columnId, rowId, change],
+    );
+  }
+
+  async recordColWasAdded(
+    entityManager: EntityManager,
+    addColRecordDto: AddColRecordDto,
+    userId: string,
+  ) {
+    const { tableId, afterColumn, colId } = addColRecordDto;
+
+    const change: ChangeRecord = {
+      changeType: 'add',
+      before: null,
+      after: null,
+      beforeColumn: null,
+      afterColumn,
+      beforeRow: null,
+      afterRow: null,
+    };
+
+    await entityManager.query(
+      /*sql*/ `
+      INSERT INTO changelog 
+        (target, user_id, table_id, column_id, row_id, change, changed_at)
+      VALUES
+        ('column', $1, $2, $3, NULL, $4, NOW())
+    `,
+      [userId, tableId, colId, change],
+    );
+  }
+
+  async recordColWasDeleted(
+    entityManager: EntityManager,
+    deleteColRecordDto: DeleteColRecordDto,
+    userId: string,
+  ) {
+    const { tableId, beforeColumn, colId } = deleteColRecordDto;
+
+    const change: ChangeRecord = {
+      changeType: 'delete',
+      before: null,
+      after: null,
+      beforeColumn,
+      afterColumn: null,
+      beforeRow: null,
+      afterRow: null,
+    };
+
+    await entityManager.query(
+      /*sql*/ `
+      INSERT INTO changelog 
+        (target, user_id, table_id, column_id, row_id, change, changed_at)
+      VALUES
+        ('column', $1, $2, $3, NULL, $4, NOW())
+    `,
+      [userId, tableId, colId, change],
     );
   }
 

@@ -41,3 +41,15 @@ export type UpdateRowDto = {
   beforeRow: null | ChangeRowItemDTO[];
   afterRow: null | ChangeRowItemDTO[];
 };
+
+export type AddColRecordDto = {
+  tableId: string;
+  colId: string;
+  afterColumn: ChangeColumnItem;
+};
+
+export type DeleteColRecordDto = {
+  tableId: string;
+  colId: string;
+  beforeColumn: ChangeColumnItem;
+};
