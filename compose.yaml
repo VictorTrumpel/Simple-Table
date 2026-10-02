@@ -1,0 +1,47 @@
+name: simple-table
+
+services:
+  redis:
+    image: redis:8.10.2-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --requirepass
+      - "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"
+    environment:
+      REDISCLI_AUTH: "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5540:5540"
+    environment:
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: "6379"
+      RI_REDIS_ALIAS: SimpleTable local
+      RI_REDIS_USERNAME: default
+      RI_REDIS_PASSWORD: "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"
+    volumes:
+      - redisinsight-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis-data:
+  redisinsight-data:

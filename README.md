@@ -33,6 +33,58 @@ $ npm install
 
 ## Compile and run the project
 
+### Local Redis and Redis Insight
+
+Set a strong `REDIS_PASSWORD` in the local `.env` file (which is ignored by Git),
+then start both services with Docker Desktop running:
+
+```dotenv
+REDIS_PASSWORD=replace-with-a-long-random-password
+REDIS_URL=redis://default:replace-with-a-long-random-password@127.0.0.1:6379
+```
+
+The password in `REDIS_URL` must be URL-encoded if it contains special characters.
+
+```bash
+docker compose up -d
+```
+
+- Redis: `127.0.0.1:6379` (database `0`, username `default`, password from `.env`).
+  Redis requires authentication for commands. Compose refuses to start if
+  `REDIS_PASSWORD` is missing or empty.
+- Redis Insight: [http://localhost:5540](http://localhost:5540). The
+  `SimpleTable local` connection is preconfigured and appears after the initial
+  setup, including accepting the terms in the UI. If the UI asks for connection
+  details, use host `redis`, port `6379`, username `default`, and `REDIS_PASSWORD`
+  from `.env`: Redis Insight connects from inside the Compose network.
+- Both ports are bound to `127.0.0.1` for local development.
+- Redis uses AOF persistence; Redis data and Redis Insight settings are stored in
+  named Docker volumes and survive container recreation.
+
+Useful commands:
+
+```bash
+docker compose ps
+docker compose exec redis redis-cli ping
+docker compose exec redis redis-cli
+docker compose logs -f redis
+docker compose stop
+docker compose up -d
+docker compose down
+```
+
+`docker compose down` preserves data. Adding `--volumes` deletes the data of both
+services.
+
+When connecting the locally running NestJS backend, use the authenticated
+`REDIS_URL` from `.env`. Starting these containers alone does not enable caching
+or sessions in the backend.
+
+To change the password, update both `REDIS_PASSWORD` and `REDIS_URL` in `.env`, run
+`docker compose up -d`, and restart the backend so it loads the new credentials.
+Redis Insight gets the password from Compose automatically; manually added
+connections may need their password updated in the UI. Data volumes are preserved.
+
 ```bash
 # development
 $ npm run start

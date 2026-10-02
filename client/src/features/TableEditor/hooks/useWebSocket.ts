@@ -5,6 +5,7 @@ import { useGridApiRef } from '@mui/x-data-grid';
 import { useTheme } from '@mui/material';
 import { useAppSelector } from '@shared/model';
 import { SuccessAddRowEvent } from '@features';
+import { tableService } from '@shared/network';
 
 export const useWebSocket = (tableId: string) => {
   const userEmail = useAppSelector((state) => state.userInfo.user?.email);
@@ -108,10 +109,16 @@ export const useWebSocket = (tableId: string) => {
     }
   };
 
-  const handleMount = () => {
+  const handleMount = async () => {
     try {
+      const response = await tableService.upgradeConnection(tableId);
+
+      if (response.error) throw response.error;
+
+      const connectionTicket = response.data;
+
       const ws = new WebSocket(
-        `${SOCKET_CONNECTION_URL}/tables?topic=${tableId}`,
+        `${SOCKET_CONNECTION_URL}/tables?ticket=${connectionTicket}`,
       );
 
       ws.addEventListener('message', handleMessage);

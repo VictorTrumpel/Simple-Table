@@ -201,6 +201,18 @@ class TableService {
       return { data: null, error: e as AxiosError };
     }
   }
+
+  async upgradeConnection(tableId: string) {
+    try {
+      const { data } = await network.post<string>(
+        `/tables/${tableId}/upgrade-connection`,
+      );
+
+      return { data, error: null };
+    } catch (e) {
+      return { data: null, error: e as AxiosError };
+    }
+  }
 }
 
 export const tableService = new TableService();

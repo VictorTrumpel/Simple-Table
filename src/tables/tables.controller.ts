@@ -27,6 +27,7 @@ import { TableColumnsService } from './services/tableColumns.service';
 import { TableRowsService } from './services/tableRows.service';
 import { TableCellService } from './services/tableCell.service';
 import { CurrentUserId } from 'src/auth/decorators/CurrentUserId';
+import { RedisService } from 'src/redis/redis.service';
 
 @Controller('tables')
 export class TablesController {
@@ -35,6 +36,7 @@ export class TablesController {
     private readonly tableColumnsService: TableColumnsService,
     private readonly tableRowsService: TableRowsService,
     private readonly tableCellService: TableCellService,
+    private readonly redisService: RedisService,
   ) {}
 
   @Post('/create')
@@ -123,6 +125,17 @@ export class TablesController {
     return this.tablesService.importTableFromExcel(file, {
       ...importTableDto,
       databaseId: Number(importTableDto.databaseId),
+    });
+  }
+
+  @Post('/:tableId/upgrade-connection')
+  upgradeConnection(
+    @Param('tableId') tableId: string,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.redisService.createTicketForTableWssConnection({
+      tableId,
+      userId,
     });
   }
 }

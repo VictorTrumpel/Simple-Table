@@ -9,9 +9,11 @@ import { DynTableFactory } from './repository/dynTable.repository';
 import { TableRowsService } from './services/tableRows.service';
 import { TableCellService } from './services/tableCell.service';
 import { ChangelogModule } from 'src/changelog/changelog.module';
+import { TableGateway } from './tables.gateway';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Table]), ChangelogModule],
+  imports: [TypeOrmModule.forFeature([Table]), ChangelogModule, RedisModule],
   controllers: [TablesController],
   providers: [
     TablesService,
@@ -20,6 +22,7 @@ import { ChangelogModule } from 'src/changelog/changelog.module';
     TableRowsService,
     DynTableFactory,
     TableCellService,
+    TableGateway,
   ],
 })
 export class TablesModule {}
