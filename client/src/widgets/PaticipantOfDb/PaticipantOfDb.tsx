@@ -25,6 +25,8 @@ export const PaticipantOfDB = () => {
   const [dbId, setDbId] = useState<string | null>(null);
   const [userList, setUserList] = useState<GetDbUserInfoDTO[]>([]);
 
+  console.log('userList :>> ', userList);
+
   const handleUpdateUserList = async () => {
     const dbId = location.pathname.split('/').at(-1);
 
@@ -100,7 +102,7 @@ export const PaticipantOfDB = () => {
         }}
       >
         {userList.map((user) => (
-          <ListItem key={user.id} sx={{ padding: 0 }}>
+          <ListItem key={user.userId} sx={{ padding: 0 }}>
             <ListItemButton
               sx={{
                 background: palette.grey[200],
@@ -108,12 +110,12 @@ export const PaticipantOfDB = () => {
                 gap: 1,
               }}
             >
-              <ListItemText primary={user.name} />
+              <ListItemText primary={user.user.email} />
 
               {dbId && role === 'admin' && (
                 <ChangeUserRole
                   dbId={dbId}
-                  userId={String(user.id)}
+                  userId={String(user.userId)}
                   role={user.role}
                 />
               )}
@@ -121,8 +123,8 @@ export const PaticipantOfDB = () => {
               {dbId && role === 'admin' && (
                 <DeleteUserAction
                   dbId={dbId}
-                  userId={String(user.id)}
-                  deletedUserName={user.name}
+                  userId={String(user.userId)}
+                  deletedUserName={user.user.email}
                 />
               )}
             </ListItemButton>

@@ -99,9 +99,9 @@ export const useWebSocket = (tableId: string) => {
       }
 
       if (eventAction === 'set_cell_value') {
-        const colId = data.payload.column_id as string;
-        const rowId = data.payload.row_id as string;
-        const value = data.payload.value as string;
+        const colId = data.columnId as string;
+        const rowId = data.rowId as string;
+        const value = data.value as string;
         handleSetCellValue({ colId, rowId, value });
       }
     } catch {

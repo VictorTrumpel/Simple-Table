@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { DatabasesService } from './databases.service';
 import { CurrentUserId } from 'src/auth/decorators/CurrentUserId';
 import { CreateDatabaseDto } from './dto/CreateDatabaseDto';
+import { SetRoleDto } from './dto/SetRoleDto';
 
 @Controller('databases')
 export class DatabasesController {
@@ -21,12 +22,24 @@ export class DatabasesController {
   }
 
   @Get('/:id/users')
-  getUsersOfDatabase() {
-    return [];
+  getUsersOfDatabase(@Param('id') dbId: number) {
+    return this.databasesService.getUsersOfDatabase(dbId);
   }
 
   @Get('/:id/role')
-  getRoleOfDatabase() {
-    return { role: 'admin' };
+  getRoleOfDatabase(
+    @CurrentUserId() userId: number,
+    @Param('id') dbId: number,
+  ) {
+    return this.databasesService.getRoleInDatabase(userId, dbId);
+  }
+
+  @Post('/:id/set-role')
+  setRole(
+    @Body() setRoleDto: SetRoleDto,
+    @Param('id') dbId: number,
+    @CurrentUserId() userId: number,
+  ) {
+    return this.databasesService.setRoleInDb(userId, dbId, setRoleDto);
   }
 }

@@ -1,20 +1,25 @@
-import { Injectable } from '@nestjs/common';
-import { IsNull, Repository, In } from 'typeorm';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { IsNull, Repository, In, EntityManager } from 'typeorm';
 import { Database } from './entities/database.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersDatabases } from './entities/usersDatabases.entity';
 import { CreateDatabaseDto } from './dto/CreateDatabaseDto';
 import { Table } from 'src/tables/entities/table.entity';
+import { SetRoleDto } from './dto/SetRoleDto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class DatabasesService {
   constructor(
+    private entityManager: EntityManager,
     @InjectRepository(Database)
     private readonly databasesRepository: Repository<Database>,
     @InjectRepository(UsersDatabases)
     private readonly usersDatabasesRepository: Repository<UsersDatabases>,
     @InjectRepository(Table)
     private readonly tableRepository: Repository<Table>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async getDatabaseListOfUser(userId: number) {
@@ -87,5 +92,51 @@ export class DatabasesService {
     );
 
     return newDatabase;
+  }
+
+  async getUsersOfDatabase(dbId: number) {
+    return this.usersDatabasesRepository
+      .createQueryBuilder('participant')
+      .leftJoinAndMapOne(
+        'participant.user',
+        User,
+        'user',
+        'user.id = participant.userId',
+      )
+      .where('participant.databaseId = :dbId', { dbId })
+      .getMany();
+  }
+
+  async setRoleInDb(adminId: number, dbId: number, setRoleDto: SetRoleDto) {
+    return this.entityManager.transaction(async (manager) => {
+      const repository = manager.getRepository(UsersDatabases);
+
+      const [possibleAdmin] = await repository.find({
+        where: { userId: adminId, databaseId: dbId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (possibleAdmin.role !== 'admin') {
+        throw new ForbiddenException({
+          message: 'You are not the admin of this database',
+        });
+      }
+
+      const newUserInDb = repository.create({
+        userId: setRoleDto.userId,
+        role: setRoleDto.role,
+        databaseId: dbId,
+      });
+
+      await repository.save(newUserInDb);
+    });
+  }
+
+  async getRoleInDatabase(userId: number, databaseId: number) {
+    const [user] = await this.usersDatabasesRepository.find({
+      where: { userId, databaseId },
+    });
+
+    return { role: user.role };
   }
 }

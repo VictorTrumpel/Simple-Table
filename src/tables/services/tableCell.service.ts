@@ -7,6 +7,7 @@ import { pickColsFromRows } from '../utils/pickColsFromRows';
 import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { ChangelogService } from 'src/changelog/changelog.service';
 import { ChangeRowItemDTO } from 'src/changelog/dto/ChangeRecord';
+import { TableGateway } from '../tables.gateway';
 
 @Injectable()
 export class TableCellService {
@@ -14,6 +15,7 @@ export class TableCellService {
     private dataSource: DataSource,
     private dynTableFactory: DynTableFactory,
     private changelogService: ChangelogService,
+    private tableGateway: TableGateway,
   ) {}
 
   async setCellValue(
@@ -103,6 +105,8 @@ export class TableCellService {
         },
         userId,
       );
+
+      this.tableGateway.broadcastSetTableValue(tableId, setCellValue);
 
       return { rows };
     });

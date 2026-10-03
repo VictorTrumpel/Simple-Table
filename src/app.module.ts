@@ -5,6 +5,7 @@ import { DatabasesModule } from './databases/databases.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TablesModule } from './tables/tables.module';
 import { ChangelogModule } from './changelog/changelog.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ChangelogModule } from './changelog/changelog.module';
     DatabasesModule,
     TablesModule,
     ChangelogModule,
+    UsersModule,
   ],
 })
 export class AppModule {}

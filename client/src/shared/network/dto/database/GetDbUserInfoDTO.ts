@@ -1,7 +1,10 @@
 export type GetDbUserInfoDTO = {
-  id: 1;
-  name: string;
-  email: string;
+  userId: 1;
   createdAt: string;
-  role: "admin" | "writer" | "reader";
+  role: 'admin' | 'writer' | 'reader';
+  user: {
+    createdAt: string;
+    email: string;
+    id: number;
+  };
 };

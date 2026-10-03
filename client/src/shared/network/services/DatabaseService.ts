@@ -35,7 +35,7 @@ class DatabaseService {
       const { data } = await network.post<{ role: GetRoleDTO }>(
         `/databases/${dbId}/set-role`,
         {
-          user_id: Number(userId),
+          userId: Number(userId),
           role,
         },
       );
