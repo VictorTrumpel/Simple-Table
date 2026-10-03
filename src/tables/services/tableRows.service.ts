@@ -10,6 +10,7 @@ import { DeleteRowsDto } from '../dto/DeleteRowsDto';
 import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { ChangeRowItemDTO } from 'src/changelog/dto/ChangeRecord';
 import { ChangelogService } from 'src/changelog/changelog.service';
+import { TableGateway } from '../tables.gateway';
 
 @Injectable()
 export class TableRowsService {
@@ -17,10 +18,11 @@ export class TableRowsService {
     private dataSource: DataSource,
     private dynTableFactory: DynTableFactory,
     private changelogSerivce: ChangelogService,
+    private tableGateway: TableGateway,
   ) {}
 
   async addRow(addRowDto: AddRowDto, userId: string) {
-    return this.dataSource.transaction(async (manager) => {
+    const newRow = await this.dataSource.transaction(async (manager) => {
       const { tableId } = addRowDto;
 
       const tableMeta = await findTableOrTrhow(tableId, manager);
@@ -80,6 +82,10 @@ export class TableRowsService {
 
       return newRow;
     });
+
+    this.tableGateway.broadcastUpdateTable(addRowDto.tableId);
+
+    return newRow;
   }
 
   async deleteRows(
@@ -87,7 +93,7 @@ export class TableRowsService {
     deleteRowsDto: DeleteRowsDto,
     userId: string,
   ) {
-    return this.dataSource.transaction(async (manager) => {
+    const deletedRow = this.dataSource.transaction(async (manager) => {
       const { rowIds } = deleteRowsDto;
 
       const tableMeta = await findTableOrTrhow(tableId, manager);
@@ -137,5 +143,9 @@ export class TableRowsService {
 
       return { deletedCount: deletedRows.length };
     });
+
+    this.tableGateway.broadcastUpdateTable(tableId);
+
+    return deletedRow;
   }
 }

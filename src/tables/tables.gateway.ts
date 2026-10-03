@@ -80,4 +80,19 @@ export class TableGateway {
       );
     });
   }
+
+  broadcastUpdateTable(tableId: string) {
+    const clientsConnectedToTable = this.mapTableIdClients.get(tableId);
+
+    if (!clientsConnectedToTable) return;
+
+    clientsConnectedToTable.forEach((client) => {
+      client.send(
+        JSON.stringify({
+          eventAction: 'fetch_table',
+          tableId,
+        }),
+      );
+    });
+  }
 }

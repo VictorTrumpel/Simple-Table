@@ -7,6 +7,7 @@ import { DynTableFactory } from '../repository/dynTable.repository';
 import { EditColumnDto } from '../dto/EditColumnDto';
 import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { ChangelogService } from 'src/changelog/changelog.service';
+import { TableGateway } from '../tables.gateway';
 
 @Injectable()
 export class TableColumnsService {
@@ -14,10 +15,11 @@ export class TableColumnsService {
     private dataSource: DataSource,
     private dynTableFactory: DynTableFactory,
     private changelogService: ChangelogService,
+    private tableGateway: TableGateway,
   ) {}
 
   async addColumn(addColumnDto: AddColumnDto, userId: string) {
-    return this.dataSource.transaction(async (manager) => {
+    const newColumn = await this.dataSource.transaction(async (manager) => {
       const { tableId } = addColumnDto;
 
       const tableMeta = await findTableOrTrhow(tableId, manager);
@@ -51,10 +53,14 @@ export class TableColumnsService {
         columns: [...tableMeta.columns, newColumn],
       });
     });
+
+    this.tableGateway.broadcastUpdateTable(addColumnDto.tableId);
+
+    return newColumn;
   }
 
-  editColumn(editColumnDto: EditColumnDto, userId: string) {
-    return this.dataSource.transaction(async (manager) => {
+  async editColumn(editColumnDto: EditColumnDto, userId: string) {
+    const newColumn = await this.dataSource.transaction(async (manager) => {
       const { tableId, column: columnPatch } = editColumnDto;
 
       const tableMeta = await findTableOrTrhow(tableId, manager);
@@ -107,10 +113,14 @@ export class TableColumnsService {
 
       return newTable;
     });
+
+    this.tableGateway.broadcastUpdateTable(editColumnDto.tableId);
+
+    return newColumn;
   }
 
-  deleteColumn(tableId: string, colId: string, userId: string) {
-    return this.dataSource.transaction(async (manager) => {
+  async deleteColumn(tableId: string, colId: string, userId: string) {
+    const deletedColumn = await this.dataSource.transaction(async (manager) => {
       const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const columnNeedToDelete = tableMeta.columns.find((c) => c.id === colId);
@@ -154,5 +164,9 @@ export class TableColumnsService {
 
       return newTable;
     });
+
+    this.tableGateway.broadcastUpdateTable(tableId);
+
+    return deletedColumn;
   }
 }
