@@ -11,10 +11,15 @@ import { TableCellService } from './services/tableCell.service';
 import { ChangelogModule } from 'src/changelog/changelog.module';
 import { TableGateway } from './tables.gateway';
 import { RedisModule } from 'src/redis/redis.module';
+import { UsersDatabases } from 'src/databases/entities/usersDatabases.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Table]), ChangelogModule, RedisModule],
-  controllers: [TablesController],
+  imports: [
+    TypeOrmModule.forFeature([Table, UsersDatabases]),
+    ChangelogModule,
+    RedisModule,
+  ],
+  controllers: [TablesController, TableGateway],
   providers: [
     TablesService,
     ExcleReaderService,
@@ -24,5 +29,6 @@ import { RedisModule } from 'src/redis/redis.module';
     TableCellService,
     TableGateway,
   ],
+  exports: [DynTableFactory, ExcleReaderService],
 })
 export class TablesModule {}

@@ -18,10 +18,8 @@ export class TableColumnsService {
     private tableGateway: TableGateway,
   ) {}
 
-  async addColumn(addColumnDto: AddColumnDto, userId: string) {
+  async addColumn(addColumnDto: AddColumnDto, userId: string, tableId: string) {
     const newColumn = await this.dataSource.transaction(async (manager) => {
-      const { tableId } = addColumnDto;
-
       const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const newColumn = {
@@ -54,14 +52,18 @@ export class TableColumnsService {
       });
     });
 
-    this.tableGateway.broadcastUpdateTable(addColumnDto.tableId);
+    this.tableGateway.broadcastUpdateTable(tableId);
 
     return newColumn;
   }
 
-  async editColumn(editColumnDto: EditColumnDto, userId: string) {
+  async editColumn(
+    editColumnDto: EditColumnDto,
+    userId: string,
+    tableId: string,
+  ) {
     const newColumn = await this.dataSource.transaction(async (manager) => {
-      const { tableId, column: columnPatch } = editColumnDto;
+      const { column: columnPatch } = editColumnDto;
 
       const tableMeta = await findTableOrTrhow(tableId, manager);
 
@@ -114,7 +116,7 @@ export class TableColumnsService {
       return newTable;
     });
 
-    this.tableGateway.broadcastUpdateTable(editColumnDto.tableId);
+    this.tableGateway.broadcastUpdateTable(tableId);
 
     return newColumn;
   }

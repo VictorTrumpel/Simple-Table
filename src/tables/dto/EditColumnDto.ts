@@ -29,10 +29,6 @@ class Column {
 }
 
 export class EditColumnDto {
-  @IsNotEmpty()
-  @IsString()
-  tableId!: string;
-
   @IsDefined()
   @ValidateNested()
   @Type(() => Column)

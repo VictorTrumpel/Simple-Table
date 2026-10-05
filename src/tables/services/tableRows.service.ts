@@ -21,10 +21,8 @@ export class TableRowsService {
     private tableGateway: TableGateway,
   ) {}
 
-  async addRow(addRowDto: AddRowDto, userId: string) {
+  async addRow(addRowDto: AddRowDto, userId: string, tableId: string) {
     const newRow = await this.dataSource.transaction(async (manager) => {
-      const { tableId } = addRowDto;
-
       const tableMeta = await findTableOrTrhow(tableId, manager);
 
       const tableColumns = tableMeta.columns;
@@ -83,7 +81,7 @@ export class TableRowsService {
       return newRow;
     });
 
-    this.tableGateway.broadcastUpdateTable(addRowDto.tableId);
+    this.tableGateway.broadcastUpdateTable(tableId);
 
     return newRow;
   }

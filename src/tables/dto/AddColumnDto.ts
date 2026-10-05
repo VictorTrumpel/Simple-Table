@@ -29,8 +29,4 @@ export class AddColumnDto {
   @ValidateNested()
   @Type(() => ColumnDto)
   column!: ColumnDto;
-
-  @IsNotEmpty()
-  @IsString()
-  tableId!: string;
 }

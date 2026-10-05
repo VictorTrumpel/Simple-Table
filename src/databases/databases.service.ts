@@ -4,9 +4,16 @@ import { Database } from './entities/database.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersDatabases } from './entities/usersDatabases.entity';
 import { CreateDatabaseDto } from './dto/CreateDatabaseDto';
-import { Table } from 'src/tables/entities/table.entity';
 import { SetRoleDto } from './dto/SetRoleDto';
 import { User } from 'src/users/entities/user.entity';
+import { randomUUID } from 'node:crypto';
+import { Table } from 'src/tables/entities/table.entity';
+import { CreateTableDto } from './dto/CreateTableDto';
+import { DynTableFactory } from 'src/tables/repository/dynTable.repository';
+import { ChangelogService } from 'src/changelog/changelog.service';
+import { ExcleReaderService } from 'src/tables/services/excelReader.service';
+import { createColId } from 'src/tables/utils/createColId';
+import { createTableId } from 'src/tables/utils/createTableId';
 
 @Injectable()
 export class DatabasesService {
@@ -18,8 +25,9 @@ export class DatabasesService {
     private readonly usersDatabasesRepository: Repository<UsersDatabases>,
     @InjectRepository(Table)
     private readonly tableRepository: Repository<Table>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private dynTableFactory: DynTableFactory,
+    private changelogService: ChangelogService,
+    private excelReaderService: ExcleReaderService,
   ) {}
 
   async getDatabaseListOfUser(userId: number) {
@@ -138,5 +146,105 @@ export class DatabasesService {
     });
 
     return { role: user.role };
+  }
+
+  async addTable(userId: number, databaseId: number, tableName: string) {
+    return this.entityManager.transaction(async (manager) => {
+      const tableUuid = createTableId();
+
+      const tableRepository = manager.getRepository(Table);
+      const userDbRoleRepository = manager.getRepository(UsersDatabases);
+
+      const [possibleAdmin] = await userDbRoleRepository.find({
+        where: { userId, databaseId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (possibleAdmin.role !== 'admin') {
+        throw new ForbiddenException({
+          message: 'You are not the admin of this database',
+        });
+      }
+
+      const newTable = tableRepository.create({
+        databaseId,
+        name: tableName,
+        id: tableUuid,
+        columns: [],
+      });
+
+      await manager.save(newTable);
+
+      const dynTableRepository = this.dynTableFactory.create(manager);
+      await dynTableRepository.createTable(newTable);
+      await dynTableRepository.createSortIndex(newTable.id);
+
+      await this.changelogService.recordTableWasAdded(manager, {
+        userId,
+        tableId: tableUuid,
+      });
+
+      return newTable;
+    });
+  }
+
+  importTableFromExcel(
+    userId: number,
+    databaseId: number,
+    tableName: string,
+    file: Express.Multer.File,
+  ) {
+    return this.entityManager.transaction(async (manager) => {
+      const tableUuid = createTableId();
+
+      const tableRepository = manager.getRepository(Table);
+      const userDbRoleRepository = manager.getRepository(UsersDatabases);
+
+      const [possibleAdmin] = await userDbRoleRepository.find({
+        where: { userId, databaseId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (possibleAdmin.role !== 'admin') {
+        throw new ForbiddenException({
+          message: 'You are not the admin of this database',
+        });
+      }
+
+      const fileData = this.excelReaderService.readFileData(file);
+
+      const cols: Table['columns'] = fileData[0].map((name) => ({
+        id: createColId(),
+        type: 'text',
+        name: String(name),
+      }));
+
+      const newTable = tableRepository.create({
+        databaseId,
+        name: tableName,
+        id: tableUuid,
+        columns: cols,
+      });
+
+      await manager.save(newTable);
+
+      const dynTableRepository = this.dynTableFactory.create(manager);
+
+      await dynTableRepository.createTable(newTable);
+
+      await dynTableRepository.createSortIndex(newTable.id);
+
+      const colsIds = cols.map(({ id }) => id);
+
+      const values = fileData.slice(1, fileData.length);
+
+      await dynTableRepository.addRowsToUserTableQuery(
+        newTable.id,
+        colsIds,
+        values,
+      );
+
+      return { tableId: newTable.id };
+    });
   }
 }

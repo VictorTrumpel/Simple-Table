@@ -8,44 +8,31 @@ import {
   HttpCode,
   HttpStatus,
   Put,
-  UseInterceptors,
-  UploadedFile,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import type { Express } from 'express';
 import { TablesService } from './services/tables.service';
-import { CreateTableDto } from './dto/CreateTableDto';
 import { AddColumnDto } from './dto/AddColumnDto';
 import { AddRowDto } from './dto/AddRowDto';
 import { DeleteRowsDto } from './dto/DeleteRowsDto';
 import { EditColumnDto } from './dto/EditColumnDto';
 import { SetCellValueDto } from './dto/SetCellValueDto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateTableFormDataDto } from './dto/CreateTableFormDataDto';
 import { ReadQueryTableDto } from './dto/ReadQueryTableDto';
 import { TableColumnsService } from './services/tableColumns.service';
 import { TableRowsService } from './services/tableRows.service';
 import { TableCellService } from './services/tableCell.service';
 import { CurrentUserId } from 'src/auth/decorators/CurrentUserId';
-import { RedisService } from 'src/redis/redis.service';
+import { TableGuard } from './guards/TableGuard';
 
 @Controller('tables')
+@UseGuards(TableGuard)
 export class TablesController {
   constructor(
     private readonly tablesService: TablesService,
     private readonly tableColumnsService: TableColumnsService,
     private readonly tableRowsService: TableRowsService,
     private readonly tableCellService: TableCellService,
-    private readonly redisService: RedisService,
   ) {}
-
-  @Post('/create')
-  create(
-    @Body() createTableDto: CreateTableDto,
-    @CurrentUserId() userId: number,
-  ) {
-    return this.tablesService.create(createTableDto, userId);
-  }
 
   @Get('/:tableId/info')
   getMetadata(@Param('tableId') tableId: string) {
@@ -60,21 +47,22 @@ export class TablesController {
     return this.tablesService.readTable(tableId, readQuery);
   }
 
-  @Delete('/delete/:tableId')
+  @Delete('/:tableId')
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteTable(@Param('tableId') tableId: string) {
     return this.tablesService.deleteTable(tableId);
   }
 
-  @Post('/add-column')
+  @Post('/:tableId/add-column')
   addColumn(
+    @Param('tableId') tableId: string,
     @Body() addColumnDto: AddColumnDto,
     @CurrentUserId() userId: string,
   ) {
-    return this.tableColumnsService.addColumn(addColumnDto, userId);
+    return this.tableColumnsService.addColumn(addColumnDto, userId, tableId);
   }
 
-  @Delete('/delete/:tableId/:colId')
+  @Delete('/:tableId/:colId')
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteColumn(
     @Param('tableId') tableId: string,
@@ -84,17 +72,22 @@ export class TablesController {
     return this.tableColumnsService.deleteColumn(tableId, colId, userId);
   }
 
-  @Put('/edit-column')
+  @Put('/:tableId/edit-column')
   editColumn(
+    @Param('tableId') tableId: string,
     @Body() editColumnDto: EditColumnDto,
     @CurrentUserId() userId: string,
   ) {
-    return this.tableColumnsService.editColumn(editColumnDto, userId);
+    return this.tableColumnsService.editColumn(editColumnDto, userId, tableId);
   }
 
   @Post('/:tableId/add-row')
-  addRow(@Body() addRowDto: AddRowDto, @CurrentUserId() userId: string) {
-    return this.tableRowsService.addRow(addRowDto, userId);
+  addRow(
+    @Param('tableId') tableId: string,
+    @Body() addRowDto: AddRowDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.tableRowsService.addRow(addRowDto, userId, tableId);
   }
 
   @Post('/:tableId/delete-rows')
@@ -114,28 +107,5 @@ export class TablesController {
     @CurrentUserId() userId: string,
   ) {
     return this.tableCellService.setCellValue(tableId, setCellValueDto, userId);
-  }
-
-  @Post('/import')
-  @UseInterceptors(FileInterceptor('file'))
-  importTableByExcel(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() importTableDto: CreateTableFormDataDto,
-  ) {
-    return this.tablesService.importTableFromExcel(file, {
-      ...importTableDto,
-      databaseId: Number(importTableDto.databaseId),
-    });
-  }
-
-  @Post('/:tableId/upgrade-connection')
-  upgradeConnection(
-    @Param('tableId') tableId: string,
-    @CurrentUserId() userId: string,
-  ) {
-    return this.redisService.createTicketForTableWssConnection({
-      tableId,
-      userId,
-    });
   }
 }

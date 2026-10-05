@@ -52,7 +52,7 @@ class TableService {
 
   async addEmptyTableToDatabase(tableName: string, dbId: string) {
     try {
-      const { data } = await network.post(`/tables/create`, {
+      const { data } = await network.post(`/databases/${dbId}/add-table`, {
         name: tableName,
         databaseId: dbId,
         columns: [],
@@ -71,7 +71,10 @@ class TableService {
       formData.set('name', tableName);
       formData.set('file', file);
 
-      const { data } = await network.post(`/tables/import`, formData);
+      const { data } = await network.post(
+        `/databases/${dbId}/import`,
+        formData,
+      );
 
       return { data, error: null };
     } catch (error) {
@@ -81,7 +84,7 @@ class TableService {
 
   async deleteTable(tableId: string) {
     try {
-      const { data } = await network.delete(`/tables/delete/${tableId}`);
+      const { data } = await network.delete(`/tables/${tableId}`);
 
       return { data, error: null };
     } catch (error) {
@@ -91,7 +94,7 @@ class TableService {
 
   async createColumn(tableId: string, column: { name: string; type: string }) {
     try {
-      const { data } = await network.post(`/tables/add-column`, {
+      const { data } = await network.post(`/tables/${tableId}/add-column`, {
         tableId: tableId,
         column,
       });
@@ -104,9 +107,7 @@ class TableService {
 
   async deleteColumn(tableId: string, columnId: string) {
     try {
-      const { data } = await network.delete(
-        `/tables/delete/${tableId}/${columnId}`,
-      );
+      const { data } = await network.delete(`/tables/${tableId}/${columnId}`);
 
       return { data, error: null };
     } catch (error) {
@@ -175,7 +176,7 @@ class TableService {
     col: { id: string; name: string; type: string; enum: string[] },
   ) {
     try {
-      const { data } = await network.put(`/tables/edit-column`, {
+      const { data } = await network.put(`/tables/${tableId}/edit-column`, {
         tableId: tableId,
         column: col,
       });
