@@ -1,14 +1,15 @@
-import { Controller, Logger, Post, Param } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { IncomingMessage } from 'http';
 import { RedisService } from 'src/redis/redis.service';
-import { CurrentUserId } from 'src/auth/decorators/CurrentUserId';
 import { WebSocketServer as WsServer, WebSocket } from 'ws';
 import { SetCellValueDto } from './dto/SetCellValueDto';
+import { User } from 'src/users/entities/user.entity';
+import { SetCellBusyDto } from './dto/SetCellBusyDto';
 
 type TableId = string;
 
-@Controller('tables')
+@Controller('table-events')
 @WebSocketGateway({ path: '/ws/tables' })
 export class TableGateway {
   @WebSocketServer()
@@ -20,17 +21,6 @@ export class TableGateway {
   private mapClientToTicket: Map<WebSocket, string> = new Map();
 
   constructor(private redisService: RedisService) {}
-
-  @Post('/:tableId/upgrade-connection')
-  async upgradeConnection(
-    @Param('tableId') tableId: string,
-    @CurrentUserId() userId: string,
-  ) {
-    return this.redisService.createTicketForTableWssConnection({
-      tableId,
-      userId,
-    });
-  }
 
   async handleConnection(client: WebSocket, request: IncomingMessage) {
     const url = new URL(request.url ?? '/', 'https://_');
@@ -103,6 +93,27 @@ export class TableGateway {
         JSON.stringify({
           eventAction: 'fetch_table',
           tableId,
+        }),
+      );
+    });
+  }
+
+  broadcastSetCellBusy(
+    user: User,
+    tableId: string,
+    setCellBusyDto: SetCellBusyDto,
+    state: 'busy' | 'free',
+  ) {
+    const clientsConnectedToTable = this.mapTableIdClients.get(String(tableId));
+
+    if (!clientsConnectedToTable) return;
+
+    clientsConnectedToTable.forEach((client) => {
+      client.send(
+        JSON.stringify({
+          eventAction: state === 'busy' ? 'set_cell_busy' : 'set_cell_free',
+          user,
+          ...setCellBusyDto,
         }),
       );
     });

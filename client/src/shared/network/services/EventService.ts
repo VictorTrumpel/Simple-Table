@@ -4,10 +4,9 @@ import { network } from '../shared/network.js';
 class EventService {
   async setCellBusy(tableId: string, rowId: string, columnId: string) {
     try {
-      const { data } = await network.post('/events/set-cell-busy', {
-        row_id: Number(rowId),
-        column_id: columnId,
-        table_id: tableId,
+      const { data } = await network.put(`/tables/${tableId}/set-cell-busy`, {
+        rowId: Number(rowId),
+        columnId: columnId,
       });
 
       return { data, error: null };
@@ -18,10 +17,9 @@ class EventService {
 
   async setCellFree(tableId: string, rowId: string, columnId: string) {
     try {
-      const { data } = await network.post('/events/set-cell-free', {
-        row_id: Number(rowId),
-        column_id: columnId,
-        table_id: tableId,
+      const { data } = await network.put(`/tables/${tableId}/set-cell-free`, {
+        rowId: Number(rowId),
+        columnId: columnId,
       });
 
       return { data, error: null };

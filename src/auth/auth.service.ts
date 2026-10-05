@@ -77,6 +77,6 @@ export class AuthService {
   }
 
   async getUserById(userId: number) {
-    return this.userRepository.findBy({ id: userId });
+    return this.userRepository.findOneBy({ id: userId });
   }
 }

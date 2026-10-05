@@ -55,6 +55,12 @@ export class TableGuard implements CanActivate {
       return true;
 
     if (
+      userRoleInDatabase.role === 'reader' &&
+      request.url.endsWith('upgrade-connection')
+    )
+      return true;
+
+    if (
       userRoleInDatabase.role === 'admin' ||
       userRoleInDatabase.role === 'writer'
     )

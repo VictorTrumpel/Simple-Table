@@ -30,5 +30,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       useClass: AuthGuard,
     },
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}

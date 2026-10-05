@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { TablesService } from './services/tables.service';
 import { AddColumnDto } from './dto/AddColumnDto';
@@ -23,15 +24,22 @@ import { TableRowsService } from './services/tableRows.service';
 import { TableCellService } from './services/tableCell.service';
 import { CurrentUserId } from 'src/auth/decorators/CurrentUserId';
 import { TableGuard } from './guards/TableGuard';
+import { RedisService } from 'src/redis/redis.service';
+import { SetCellBusyDto } from './dto/SetCellBusyDto';
+import { AuthService } from 'src/auth/auth.service';
+import { TableGateway } from './tables.gateway';
 
 @Controller('tables')
 @UseGuards(TableGuard)
 export class TablesController {
   constructor(
-    private readonly tablesService: TablesService,
-    private readonly tableColumnsService: TableColumnsService,
-    private readonly tableRowsService: TableRowsService,
-    private readonly tableCellService: TableCellService,
+    private tablesService: TablesService,
+    private tableColumnsService: TableColumnsService,
+    private tableRowsService: TableRowsService,
+    private tableCellService: TableCellService,
+    private redisService: RedisService,
+    private authService: AuthService,
+    private tableGateway: TableGateway,
   ) {}
 
   @Get('/:tableId/info')
@@ -107,5 +115,44 @@ export class TablesController {
     @CurrentUserId() userId: string,
   ) {
     return this.tableCellService.setCellValue(tableId, setCellValueDto, userId);
+  }
+
+  @Post('/:tableId/upgrade-connection')
+  async upgradeConnection(
+    @Param('tableId') tableId: string,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.redisService.createTicketForTableWssConnection({
+      tableId,
+      userId,
+    });
+  }
+
+  @Put('/:tableId/set-cell-busy')
+  async setCellBusy(
+    @Param('tableId') tableId: string,
+    @Body() setCellBusy: SetCellBusyDto,
+    @CurrentUserId() userId: number,
+  ) {
+    const user = await this.authService.getUserById(userId);
+
+    if (!user)
+      throw new NotFoundException(`User with id: ${userId} doesn't exist`);
+
+    this.tableGateway.broadcastSetCellBusy(user, tableId, setCellBusy, 'busy');
+  }
+
+  @Put('/:tableId/set-cell-free')
+  async setCellFree(
+    @Param('tableId') tableId: string,
+    @Body() setCellBusy: SetCellBusyDto,
+    @CurrentUserId() userId: number,
+  ) {
+    const user = await this.authService.getUserById(userId);
+
+    if (!user)
+      throw new NotFoundException(`User with id: ${userId} doesn't exist`);
+
+    this.tableGateway.broadcastSetCellBusy(user, tableId, setCellBusy, 'free');
   }
 }

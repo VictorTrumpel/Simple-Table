@@ -81,15 +81,15 @@ export const useWebSocket = (tableId: string) => {
       }
 
       if (eventAction === 'set_cell_free') {
-        const colId = data.payload.column_id as string;
-        const rowId = data.payload.row_id as string;
+        const colId = data.columnId as string;
+        const rowId = data.rowId as string;
         handleSetCellFree(colId, rowId);
       }
 
       if (eventAction === 'set_cell_busy') {
-        const colId = data.payload.column_id as string;
-        const rowId = data.payload.row_id as string;
-        const user = data.payload.user as {
+        const colId = data.columnId as string;
+        const rowId = data.rowId as string;
+        const user = data.user as {
           email: string;
           id: number;
           name: string;

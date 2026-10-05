@@ -12,12 +12,14 @@ import { ChangelogModule } from 'src/changelog/changelog.module';
 import { TableGateway } from './tables.gateway';
 import { RedisModule } from 'src/redis/redis.module';
 import { UsersDatabases } from 'src/databases/entities/usersDatabases.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Table, UsersDatabases]),
     ChangelogModule,
     RedisModule,
+    AuthModule,
   ],
   controllers: [TablesController, TableGateway],
   providers: [
