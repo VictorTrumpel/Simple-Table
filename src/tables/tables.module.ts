@@ -16,6 +16,7 @@ import { TableGateway } from './tables.gateway';
 import { RedisModule } from 'src/redis/redis.module';
 import { UsersDatabases } from 'src/databases/entities/usersDatabases.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { ValidateCellService } from './services/validateCell.service';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AuthModule } from 'src/auth/auth.module';
     DynTableRepository,
     TableCellService,
     TableGateway,
+    ValidateCellService,
   ],
   exports: [DynTableFactory, ExcleReaderService],
 })

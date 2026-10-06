@@ -11,6 +11,7 @@ import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { ChangeRowItemDTO } from 'src/changelog/dto/ChangeRecord';
 import { ChangelogService } from 'src/changelog/changelog.service';
 import { TableGateway } from '../tables.gateway';
+import { ValidateCellService } from './validateCell.service';
 
 @Injectable()
 export class TableRowsService {
@@ -19,6 +20,7 @@ export class TableRowsService {
     private dynTableFactory: DynTableFactory,
     private changelogSerivce: ChangelogService,
     private tableGateway: TableGateway,
+    private validateCellService: ValidateCellService,
   ) {}
 
   async addRow(addRowDto: AddRowDto, userId: string, tableId: string) {
@@ -48,6 +50,31 @@ export class TableRowsService {
         });
       }
 
+      const colIdMapCol = new Map(tableColumns.map((col) => [col.id, col]));
+
+      for (const updatedColId of updatedColIds) {
+        const updatedCol = colIdMapCol.get(updatedColId);
+        const updatedColValue = addRowDto.data[updatedColId];
+
+        if (!updatedCol) {
+          throw new BadRequestException({
+            message: `Unknown column id: ${updatedColId}`,
+          });
+        }
+
+        const isValidValue = this.validateCellService.validateValue(
+          updatedColValue,
+          updatedCol.type,
+          updatedCol.enum,
+        );
+
+        if (!isValidValue) {
+          throw new BadRequestException({
+            message: `Not valid value for column id: ${updatedCol.id} with type: ${updatedCol.type}`,
+          });
+        }
+      }
+
       const colValues = updatedColIds.map((colId) => addRowDto.data[colId]);
 
       const dynTableRepository = this.dynTableFactory.create(manager);
@@ -58,12 +85,8 @@ export class TableRowsService {
         colValues,
       );
 
-      const colIdMapName = new Map(
-        tableColumns.map(({ id, name }) => [id, name]),
-      );
-
       const changeRecord: ChangeRowItemDTO[] = updatedColIds.map((colId) => {
-        const colName = colIdMapName.get(colId);
+        const colName = colIdMapCol.get(colId)?.name;
         const colValue = newRow[colId];
         return {
           columnID: colId,

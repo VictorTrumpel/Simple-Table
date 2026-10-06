@@ -217,6 +217,7 @@ export class DatabasesService {
         id: createColId(),
         type: 'text',
         name: String(name),
+        enum: [],
       }));
 
       const newTable = tableRepository.create({

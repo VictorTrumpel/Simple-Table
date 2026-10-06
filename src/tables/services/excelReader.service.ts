@@ -1,8 +1,5 @@
 import { Injectable, StreamableFile } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import * as XLSX from 'xlsx';
-import { Table } from '../entities/table.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DynTableRepository } from '../repository/dynTable.repository';
 
 @Injectable()

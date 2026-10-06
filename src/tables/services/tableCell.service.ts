@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { DynTableFactory } from '../repository/dynTable.repository';
 import { SetCellValueDto } from '../dto/SetCellValueDto';
@@ -8,6 +8,7 @@ import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { ChangelogService } from 'src/changelog/changelog.service';
 import { ChangeRowItemDTO } from 'src/changelog/dto/ChangeRecord';
 import { TableGateway } from '../tables.gateway';
+import { ValidateCellService } from './validateCell.service';
 
 @Injectable()
 export class TableCellService {
@@ -16,6 +17,7 @@ export class TableCellService {
     private dynTableFactory: DynTableFactory,
     private changelogService: ChangelogService,
     private tableGateway: TableGateway,
+    private validateCellService: ValidateCellService,
   ) {}
 
   async setCellValue(
@@ -26,13 +28,25 @@ export class TableCellService {
     return this.dataSource.transaction(async (manager) => {
       const table = await findTableOrTrhow(tableId, manager);
 
-      const columnExist = table.columns.some(
+      const columnExist = table.columns.find(
         (c) => c.id === setCellValue.columnId,
       );
 
       if (!columnExist) {
         throw new NotFoundException({
           message: `column with id ${setCellValue.columnId} does not exist`,
+        });
+      }
+
+      const isCellValueValid = this.validateCellService.validateValue(
+        setCellValue.value,
+        columnExist.type,
+        columnExist.enum,
+      );
+
+      if (!isCellValueValid) {
+        throw new BadRequestException({
+          message: `Not valid value for type: ${columnExist.type}`,
         });
       }
 

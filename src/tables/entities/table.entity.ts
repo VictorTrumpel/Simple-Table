@@ -24,6 +24,7 @@ export class Table {
     id: string;
     name: string;
     type: ColumnType;
+    enum: string[];
   }[] = [];
 
   @CreateDateColumn({
