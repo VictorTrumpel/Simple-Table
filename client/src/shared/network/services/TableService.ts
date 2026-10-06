@@ -189,7 +189,7 @@ class TableService {
 
   async getExport(id: string) {
     try {
-      const response = await network.get(`/tables/${id}/export`, {
+      const response = await network.get(`/tables/${id}/download-excel`, {
         responseType: 'arraybuffer',
       });
 

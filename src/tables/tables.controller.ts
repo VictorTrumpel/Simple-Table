@@ -11,6 +11,7 @@ import {
   Query,
   UseGuards,
   NotFoundException,
+  StreamableFile,
 } from '@nestjs/common';
 import { TablesService } from './services/tables.service';
 import { AddColumnDto } from './dto/AddColumnDto';
@@ -28,6 +29,7 @@ import { RedisService } from 'src/redis/redis.service';
 import { SetCellBusyDto } from './dto/SetCellBusyDto';
 import { AuthService } from 'src/auth/auth.service';
 import { TableGateway } from './tables.gateway';
+import { ExcleReaderService } from './services/excelReader.service';
 
 @Controller('tables')
 @UseGuards(TableGuard)
@@ -40,6 +42,7 @@ export class TablesController {
     private redisService: RedisService,
     private authService: AuthService,
     private tableGateway: TableGateway,
+    private excelReaderService: ExcleReaderService,
   ) {}
 
   @Get('/:tableId/info')
@@ -154,5 +157,10 @@ export class TablesController {
       throw new NotFoundException(`User with id: ${userId} doesn't exist`);
 
     this.tableGateway.broadcastSetCellBusy(user, tableId, setCellBusy, 'free');
+  }
+
+  @Get('/:tableId/download-excel')
+  async downloadExcel(@Param('tableId') tableId: string) {
+    return this.excelReaderService.getStreamableBufferForExcel(tableId);
   }
 }

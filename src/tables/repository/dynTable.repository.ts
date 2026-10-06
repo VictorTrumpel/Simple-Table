@@ -13,6 +13,7 @@ export type ReadTableQuery = {
   filterValue?: string;
 };
 
+@Injectable()
 export class DynTableRepository {
   private tableSpace = 'users_tablespace';
 
