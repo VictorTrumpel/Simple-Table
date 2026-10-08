@@ -10,6 +10,7 @@ import {
   MenuItem,
   Select,
   Button,
+  Alert,
 } from '@mui/material';
 import { EnumEditor } from '@entity';
 import { useViewModel } from './hooks/useViewModel.js';
@@ -40,6 +41,8 @@ export const EditColumnAction = ({
   const [showDialog, setShowDialog] = useBoolean(false);
   const [isUpdating, setIsUpdating] = useBoolean(false);
 
+  const [needForceUpdate, setNeedForceUpdate] = useState(false);
+
   const [enums, setEnums] = useState<string[]>(defaultEnums || []);
 
   const [values, setValues] = useState<{ name: string; type: string }>({
@@ -67,18 +70,22 @@ export const EditColumnAction = ({
     setShowDialog();
   };
 
-  const handleSaveColumn = async () => {
+  const handleSaveColumn = async (forceUpdate?: boolean) => {
     setIsUpdating(true);
 
     let response: Response<unknown>;
 
     if (colId) {
-      response = await editColumn(tableId, {
-        id: colId,
-        name: values.name,
-        type: values.type,
-        enum: enums,
-      });
+      response = await editColumn(
+        tableId,
+        {
+          id: colId,
+          name: values.name,
+          type: values.type,
+          enum: enums,
+        },
+        forceUpdate,
+      );
     } else {
       response = await handleSave(tableId, {
         name: values.name,
@@ -88,6 +95,13 @@ export const EditColumnAction = ({
     }
 
     setIsUpdating(false);
+
+    if (response.error?.status === 409) {
+      setNeedForceUpdate(true);
+      return;
+    }
+
+    console.log('response.error :>> ', response.error);
 
     if (response.error) {
       enqueueSnackbar('Не удалось обновить колонку!', { variant: 'error' });
@@ -167,6 +181,32 @@ export const EditColumnAction = ({
               <EnumEditor enums={enums} onChange={setEnums} />
             )}
 
+            {needForceUpdate && (
+              <Alert
+                severity="error"
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => handleSaveColumn(true)}
+                  >
+                    Преобразовать
+                  </Button>
+                }
+                sx={{
+                  '.MuiAlert-icon': {
+                    alignItems: 'center',
+                  },
+                  '.MuiAlert-action': {
+                    alignItems: 'center',
+                  },
+                }}
+              >
+                Данная колонка содержит значения другого типа. Данные при
+                преобразовании могут повредиться.
+              </Alert>
+            )}
+
             <Box display="flex" gap={1} justifyContent="end">
               <Button loading={isUpdating} onClick={handleCloseDialog}>
                 Закрыть
@@ -174,10 +214,10 @@ export const EditColumnAction = ({
 
               <Button
                 loading={isUpdating}
-                disabled={!isValid()}
+                disabled={!isValid() || needForceUpdate}
                 type="submit"
                 variant="contained"
-                onClick={handleSaveColumn}
+                onClick={() => handleSaveColumn()}
               >
                 Сохранить
               </Button>

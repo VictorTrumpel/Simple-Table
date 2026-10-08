@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AddColumnDto } from '../dto/AddColumnDto';
 import { Table } from '../entities/table.entity';
 import { createColId } from '../utils/createColId';
@@ -8,6 +12,7 @@ import { EditColumnDto } from '../dto/EditColumnDto';
 import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 import { ChangelogService } from 'src/changelog/changelog.service';
 import { TableGateway } from '../tables.gateway';
+import { ValidateCellService } from './validateCell.service';
 
 @Injectable()
 export class TableColumnsService {
@@ -16,6 +21,7 @@ export class TableColumnsService {
     private dynTableFactory: DynTableFactory,
     private changelogService: ChangelogService,
     private tableGateway: TableGateway,
+    private validateCellService: ValidateCellService,
   ) {}
 
   async addColumn(addColumnDto: AddColumnDto, userId: string, tableId: string) {
@@ -76,6 +82,47 @@ export class TableColumnsService {
           message: `Column with id: ${columnPatch.id} does not exist`,
         });
       }
+
+      const dynTable = this.dynTableFactory.create(manager);
+
+      const allValuesOfColumn = await dynTable.getAllValuesOfColumn(
+        tableMeta.id,
+        columnNeedToPatch.id,
+      );
+
+      let isAllCellValid = true;
+
+      for (const cellValue of allValuesOfColumn) {
+        const isCellValid = this.validateCellService.validateValue(
+          cellValue.colValue,
+          columnPatch.type,
+          columnPatch.enum,
+        );
+
+        if (!isCellValid) {
+          isAllCellValid = false;
+          break;
+        }
+      }
+
+      if (!isAllCellValid && !editColumnDto.forceUpdate) {
+        throw new ConflictException({
+          message: `Not all values in column match with type: ${columnPatch.type}`,
+        });
+      }
+
+      await dynTable.updateColumnValues(
+        tableMeta.id,
+        columnNeedToPatch.id,
+        allValuesOfColumn.map((r) => ({
+          id: r.rowId,
+          value: this.validateCellService.convertValueToColumnType(
+            r.colValue,
+            columnPatch.type,
+            columnPatch.enum,
+          ),
+        })),
+      );
 
       const updatedColumn = {
         ...columnNeedToPatch,

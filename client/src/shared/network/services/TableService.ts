@@ -173,12 +173,19 @@ class TableService {
 
   async editColInfo(
     tableId: string,
-    col: { id: string; name: string; type: string; enum: string[] },
+    col: {
+      id: string;
+      name: string;
+      type: string;
+      enum: string[];
+    },
+    forceUpdate?: boolean,
   ) {
     try {
       const { data } = await network.put(`/tables/${tableId}/edit-column`, {
         tableId: tableId,
         column: col,
+        forceUpdate,
       });
 
       return { data, error: null };

@@ -95,6 +95,66 @@ export class DynTableRepository {
     `);
   }
 
+  async getAllValuesOfColumn(tableId: string, columnId: string) {
+    const rows = await this.entityManager.query<
+      Record<string, unknown>[]
+    >(/*sql*/ `
+      SELECT id, ${columnId} FROM ${this.tableSpace}.${tableId};
+    `);
+
+    const record: { rowId: string; colValue: unknown }[] = [];
+
+    for (const row of rows) {
+      const recrodItem: { rowId?: string; colValue?: unknown } = {};
+
+      for (const rowKey in row) {
+        if (rowKey === 'id') {
+          recrodItem.rowId = String(row[rowKey]);
+          continue;
+        }
+        if (rowKey.startsWith('c_')) {
+          recrodItem.colValue = row[rowKey];
+        }
+      }
+
+      record.push(recrodItem as { rowId: string; colValue: unknown });
+    }
+
+    return record;
+  }
+
+  async updateColumnValues(
+    tableId: string,
+    columnId: string,
+    values: { id: string | number; value: unknown }[],
+  ): Promise<Record<string, unknown>[]> {
+    if (values.length === 0) return [];
+
+    const parameters: unknown[] = [];
+
+    const valuesSql = values
+      .map(({ id, value }) => {
+        parameters.push(id, value);
+        return `($${parameters.length - 1}::bigint, $${parameters.length}::text)`;
+      })
+      .join(', ');
+
+    const [updatedRows] = await this.entityManager.query<
+      [Record<string, unknown>[], number]
+    >(
+      /*sql*/ `
+        UPDATE ${this.tableSpace}.${tableId} AS t
+        SET ${columnId} = v.new_value
+        FROM (VALUES ${valuesSql}) AS v(id, new_value)
+        WHERE t.id = v.id AND t.deleted_at IS NULL
+        RETURNING t.*;
+      `,
+      parameters,
+    );
+
+    return updatedRows;
+  }
+
   async setCellValue(tableId: string, setCellValueDto: SetCellValueDto) {
     const { columnId, rowId, value } = setCellValueDto;
 

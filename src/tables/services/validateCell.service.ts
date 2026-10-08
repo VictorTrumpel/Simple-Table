@@ -29,4 +29,20 @@ export class ValidateCellService {
 
     return false;
   }
+
+  convertValueToColumnType(
+    value: unknown,
+    cellType: ColumnType,
+    enumValues: string[],
+  ) {
+    if (cellType === 'numeric') return Number(value);
+    if (cellType === 'text') return String(value);
+    if (cellType === 'timestamp') return new Date(String(value));
+    if (cellType === 'enum') {
+      for (const enumValue of enumValues) {
+        if (value === enumValue) return enumValue;
+      }
+      return null;
+    }
+  }
 }

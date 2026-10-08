@@ -5,6 +5,8 @@ import {
   ValidateNested,
   IsIn,
   IsArray,
+  IsBoolean,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import type { ColumnType } from '../entities/table.entity';
@@ -33,4 +35,8 @@ export class EditColumnDto {
   @ValidateNested()
   @Type(() => Column)
   column!: Column;
+
+  @IsOptional()
+  @IsBoolean()
+  forceUpdate?: boolean;
 }
