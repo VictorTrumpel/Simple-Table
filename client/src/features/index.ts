@@ -1,6 +1,6 @@
 export * from './DatabaseTreeView/index.js';
 export * from './AddDBAction/index.js';
-export * from './TableTreeItems/index.js';
+export * from './DatabaseTreeView/TableTreeItems/index.js';
 export * from './ColumnEditor/index.js';
 export * from './TableEditor/index.js';
 export * from './LogInForm/index.js';

@@ -25,8 +25,6 @@ export const PaticipantOfDB = () => {
   const [dbId, setDbId] = useState<string | null>(null);
   const [userList, setUserList] = useState<GetDbUserInfoDTO[]>([]);
 
-  console.log('userList :>> ', userList);
-
   const handleUpdateUserList = async () => {
     const dbId = location.pathname.split('/').at(-1);
 

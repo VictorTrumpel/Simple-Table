@@ -4,11 +4,11 @@ import { SimpleTreeView } from '@mui/x-tree-view';
 import { DBTreeItem } from '@entity';
 import { useViewModel } from './hooks/useViewModel.js';
 import { SuccessAddDb } from '../AddDBAction/index.js';
-import { SuccessAddTable } from '../TableTreeItems/index.js';
-import { TableTreeItems } from '../TableTreeItems/index.js';
+import { SuccessAddTable } from './TableTreeItems/index.js';
+import { TableTreeItems } from './TableTreeItems/index.js';
 import { useHistory } from 'react-router-dom';
 import type { GetTreeDatabaseDTO } from '@shared/network';
-import { SuccessDeleteTable } from '../TableTreeItem/events/SuccessDeleteTable.js';
+import { SuccessDeleteTable } from './TableTreeItem/events/SuccessDeleteTable.js';
 
 export const DatabaseTreeView = () => {
   const { getTree, handleAddDatabase } = useViewModel();
