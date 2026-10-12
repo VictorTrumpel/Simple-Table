@@ -14,6 +14,8 @@ import { ChangelogService } from 'src/changelog/changelog.service';
 import { ExcleReaderService } from 'src/tables/services/excelReader.service';
 import { createColId } from 'src/tables/utils/createColId';
 import { createTableId } from 'src/tables/utils/createTableId';
+import { CreateChartDto } from './dto/CreateChartDto';
+import { ChartEntity } from 'src/charts/entities/chart.entity';
 
 @Injectable()
 export class DatabasesService {
@@ -119,16 +121,7 @@ export class DatabasesService {
     return this.entityManager.transaction(async (manager) => {
       const repository = manager.getRepository(UsersDatabases);
 
-      const [possibleAdmin] = await repository.find({
-        where: { userId: adminId, databaseId: dbId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (possibleAdmin.role !== 'admin') {
-        throw new ForbiddenException({
-          message: 'You are not the admin of this database',
-        });
-      }
+      await this.checkIfAdminOrThrow(manager, adminId, dbId);
 
       const newUserInDb = repository.create({
         userId: setRoleDto.userId,
@@ -153,18 +146,8 @@ export class DatabasesService {
       const tableUuid = createTableId();
 
       const tableRepository = manager.getRepository(Table);
-      const userDbRoleRepository = manager.getRepository(UsersDatabases);
 
-      const [possibleAdmin] = await userDbRoleRepository.find({
-        where: { userId, databaseId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (possibleAdmin.role !== 'admin') {
-        throw new ForbiddenException({
-          message: 'You are not the admin of this database',
-        });
-      }
+      await this.checkIfAdminOrThrow(manager, userId, databaseId);
 
       const newTable = tableRepository.create({
         databaseId,
@@ -198,18 +181,8 @@ export class DatabasesService {
       const tableUuid = createTableId();
 
       const tableRepository = manager.getRepository(Table);
-      const userDbRoleRepository = manager.getRepository(UsersDatabases);
 
-      const [possibleAdmin] = await userDbRoleRepository.find({
-        where: { userId, databaseId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (possibleAdmin.role !== 'admin') {
-        throw new ForbiddenException({
-          message: 'You are not the admin of this database',
-        });
-      }
+      await this.checkIfAdminOrThrow(manager, userId, databaseId);
 
       const fileData = this.excelReaderService.readFileData(file);
 
@@ -247,5 +220,41 @@ export class DatabasesService {
 
       return { tableId: newTable.id };
     });
+  }
+
+  createChart(createChartDto: CreateChartDto, userId: number, dbId: number) {
+    return this.entityManager.transaction(async (manager) => {
+      const chartEntity = manager.getRepository(ChartEntity);
+
+      await this.checkIfAdminOrThrow(manager, userId, dbId);
+
+      const newChart = chartEntity.create({
+        name: createChartDto.name,
+        config: createChartDto.config,
+      });
+
+      await manager.save(newChart);
+
+      return newChart.id;
+    });
+  }
+
+  private async checkIfAdminOrThrow(
+    manager: EntityManager,
+    userId: number,
+    databaseId: number,
+  ) {
+    const userDbRoleRepository = manager.getRepository(UsersDatabases);
+
+    const [possibleAdmin] = await userDbRoleRepository.find({
+      where: { userId, databaseId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (possibleAdmin.role !== 'admin') {
+      throw new ForbiddenException({
+        message: 'You are not the admin of this database',
+      });
+    }
   }
 }

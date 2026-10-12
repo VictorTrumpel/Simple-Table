@@ -8,10 +8,17 @@ import { Table } from 'src/tables/entities/table.entity';
 import { User } from 'src/users/entities/user.entity';
 import { TablesModule } from 'src/tables/tables.module';
 import { ChangelogModule } from 'src/changelog/changelog.module';
+import { ChartEntity } from 'src/charts/entities/chart.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Database, UsersDatabases, Table, User]),
+    TypeOrmModule.forFeature([
+      Database,
+      UsersDatabases,
+      Table,
+      User,
+      ChartEntity,
+    ]),
     TablesModule,
     ChangelogModule,
   ],

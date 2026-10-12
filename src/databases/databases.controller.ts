@@ -13,6 +13,7 @@ import { CreateDatabaseDto } from './dto/CreateDatabaseDto';
 import { SetRoleDto } from './dto/SetRoleDto';
 import { CreateTableDto } from './dto/CreateTableDto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateChartDto } from './dto/CreateChartDto';
 
 @Controller('databases')
 export class DatabasesController {
@@ -60,6 +61,15 @@ export class DatabasesController {
     @Param('id') dbId: number,
   ) {
     return this.databasesService.addTable(userId, dbId, createTableDto.name);
+  }
+
+  @Post('/:id/add-chart')
+  addGraphics(
+    @Body() createChartDto: CreateChartDto,
+    @CurrentUserId() userId: number,
+    @Param('id') dbId: number,
+  ) {
+    return this.databasesService.createChart(createChartDto, userId, dbId);
   }
 
   @Post('/:id/import')
