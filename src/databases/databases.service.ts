@@ -16,6 +16,7 @@ import { createColId } from 'src/tables/utils/createColId';
 import { createTableId } from 'src/tables/utils/createTableId';
 import { CreateChartDto } from './dto/CreateChartDto';
 import { ChartEntity } from 'src/charts/entities/chart.entity';
+import { ChartBindingsEntity } from 'src/charts/entities/chartBindings.entity';
 
 @Injectable()
 export class DatabasesService {
@@ -27,6 +28,8 @@ export class DatabasesService {
     private readonly usersDatabasesRepository: Repository<UsersDatabases>,
     @InjectRepository(Table)
     private readonly tableRepository: Repository<Table>,
+    @InjectRepository(ChartEntity)
+    private readonly chartRepository: Repository<ChartEntity>,
     private dynTableFactory: DynTableFactory,
     private changelogService: ChangelogService,
     private excelReaderService: ExcleReaderService,
@@ -51,6 +54,11 @@ export class DatabasesService {
       select: { id: true, name: true, databaseId: true, createdAt: true },
     });
 
+    const chartsOfDatabases: ChartEntity[] = await this.chartRepository.find({
+      where: { databaseId: In(databasesIds) },
+      select: { id: true, name: true, databaseId: true },
+    });
+
     type TableWithoutColumns = Omit<Table, 'columns' | 'deletedAt'>;
     const tablesWithoutColumns: TableWithoutColumns[] = tablesOfDatabases.map(
       (t) => ({
@@ -73,12 +81,33 @@ export class DatabasesService {
       dbTablesMap.set(dbId, [table]);
     });
 
+    type ChartWithoutConfig = Omit<ChartEntity, 'config'>;
+    const dbChartMap = new Map<number, ChartWithoutConfig[]>();
+
+    chartsOfDatabases.forEach((chart) => {
+      const dbId = chart.databaseId;
+
+      const chartWithoutConfig: ChartWithoutConfig = {
+        id: chart.id,
+        name: chart.name,
+        databaseId: chart.databaseId,
+      };
+
+      if (dbChartMap.has(dbId)) {
+        (dbChartMap.get(dbId) ?? []).push(chartWithoutConfig);
+        return;
+      }
+
+      dbChartMap.set(dbId, [chartWithoutConfig]);
+    });
+
     const databasesWithTables = databases.map((db) => {
       return {
         id: db.id,
         role: databaseRoleMap.get(db.id),
         name: db.name,
         tables: dbTablesMap.get(db.id) ?? [],
+        charts: dbChartMap.get(db.id) ?? [],
       };
     });
 
@@ -231,9 +260,21 @@ export class DatabasesService {
       const newChart = chartEntity.create({
         name: createChartDto.name,
         config: createChartDto.config,
+        databaseId: dbId,
       });
 
       await manager.save(newChart);
+
+      if (createChartDto.chartBindings.length > 0) {
+        await manager.getRepository(ChartBindingsEntity).insert(
+          createChartDto.chartBindings.map((binding) => ({
+            chartId: newChart.id,
+            tableId: binding.tableId,
+            columnId: binding.columnId,
+            bindingKey: binding.bindingKey,
+          })),
+        );
+      }
 
       return newChart.id;
     });

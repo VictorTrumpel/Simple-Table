@@ -10,4 +10,7 @@ export class ChartEntity {
 
   @Column({ type: 'jsonb' })
   config!: Record<string, unknown>;
+
+  @Column({ type: 'integer', name: 'database_id' })
+  databaseId!: number;
 }

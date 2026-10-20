@@ -1,6 +1,6 @@
 import { type MouseEvent } from "react";
 import { TreeItem, mainVioletColor } from "@shared";
-import { FaDatabase, FaTable } from "react-icons/fa6";
+import { FaChartLine, FaDatabase, FaTable } from "react-icons/fa6";
 import { TbSql } from "react-icons/tb";
 import { IoLinkSharp, IoChatbox } from "react-icons/io5";
 import { TbUsers } from "react-icons/tb";
@@ -11,6 +11,7 @@ import AddIcon from "@mui/icons-material/Add";
 const iconMatcher = {
   database: <FaDatabase color={mainVioletColor} />,
   table: <FaTable color={mainVioletColor} />,
+  graph: <FaChartLine color={mainVioletColor} />,
   query: <TbSql transform="scale(1.2)" color={mainVioletColor} />,
   link: <IoLinkSharp color={mainVioletColor} />,
   paticipant: <TbUsers color={mainVioletColor} />,

@@ -8,6 +8,7 @@ import { Box, CircularProgress } from '@mui/material';
 import {
   LeftSidebar,
   TableWorkArea,
+  GraphWorkArea,
   AuthPage,
   PaticipantOfDB,
   RegistrationPage,
@@ -73,6 +74,9 @@ const AppContent = () => {
         sx={{ backgroundColor: 'rgb(250 250 250 / 1)' }}
       >
         <Switch>
+          <Route exact path="/chart-item/:chartId">
+            <GraphWorkArea />
+          </Route>
           <Route path="/table-item">
             <TableWorkArea />
           </Route>

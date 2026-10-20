@@ -9,6 +9,7 @@ import { User } from 'src/users/entities/user.entity';
 import { TablesModule } from 'src/tables/tables.module';
 import { ChangelogModule } from 'src/changelog/changelog.module';
 import { ChartEntity } from 'src/charts/entities/chart.entity';
+import { ChartBindingsEntity } from 'src/charts/entities/chartBindings.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ChartEntity } from 'src/charts/entities/chart.entity';
       Table,
       User,
       ChartEntity,
+      ChartBindingsEntity,
     ]),
     TablesModule,
     ChangelogModule,
