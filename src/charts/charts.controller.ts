@@ -11,7 +11,6 @@ export class ChartsController {
     @Body() createBindingDto: CreateBindingDto,
     @Param('id') chartId: number,
   ) {
-    console.log('test');
     return this.chartsService.createBindingDto(chartId, createBindingDto);
   }
 
