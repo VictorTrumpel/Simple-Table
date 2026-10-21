@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { MenuGraphWork, type GraphMenuPanel } from '@entity';
+import { AddChartBindingDialog, ChartBindingList } from '@features';
 import { useParams } from 'react-router-dom';
 import { treeDatabaseService, type GetTreeChartDTO } from '@shared/network';
 
@@ -22,6 +23,9 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
   const [chart, setChart] = useState<GetTreeChartDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dbId, setDbId] = useState<string | null>(null);
+  const [isBindingDialogOpen, setIsBindingDialogOpen] = useState(false);
+  const [bindingsVersion, setBindingsVersion] = useState(0);
 
   useEffect(() => {
     let isActive = true;
@@ -34,12 +38,16 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
       if (response.error) {
         setError('Не удалось загрузить график');
       } else {
-        const selectedChart = response.data
-          .flatMap((database) => database.charts ?? [])
-          .find((item) => String(item.id) === chartId);
+        const database = response.data.find((item) =>
+          item.charts?.some((chart) => String(chart.id) === chartId),
+        );
+        const selectedChart = database?.charts?.find(
+          (item) => String(item.id) === chartId,
+        );
 
-        if (selectedChart) {
+        if (selectedChart && database) {
           setChart(selectedChart);
+          setDbId(String(database.id));
         } else {
           setError('График не найден');
         }
@@ -123,14 +131,30 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
                 <Button
                   variant="outlined"
                   startIcon={<AddIcon />}
+                  onClick={() => setIsBindingDialogOpen(true)}
                   sx={{ borderRadius: '8px' }}
                 >
                   Добавить ссылку на колонку
                 </Button>
+                {dbId && (
+                  <ChartBindingList
+                    key={bindingsVersion}
+                    chartId={chartId}
+                    dbId={dbId}
+                  />
+                )}
               </Box>
             )}
           </Box>
         </>
+      )}
+      {isBindingDialogOpen && dbId && (
+        <AddChartBindingDialog
+          chartId={chartId}
+          dbId={dbId}
+          onClose={() => setIsBindingDialogOpen(false)}
+          onSuccess={() => setBindingsVersion((version) => version + 1)}
+        />
       )}
     </Box>
   );

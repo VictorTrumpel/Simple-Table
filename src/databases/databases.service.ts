@@ -280,6 +280,10 @@ export class DatabasesService {
     });
   }
 
+  getTables(databaseId: number) {
+    return this.tableRepository.find({ where: { databaseId } });
+  }
+
   private async checkIfAdminOrThrow(
     manager: EntityManager,
     userId: number,

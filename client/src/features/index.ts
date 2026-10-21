@@ -10,3 +10,5 @@ export * from './AddUserAction/index.js';
 export * from './ChangeUserRole/index.js';
 export * from './DeleteUserAction/index.js';
 export * from './ChangesHistory/index.js';
+export { AddChartBindingDialog } from './AddChartBindingDialog/AddChartBindingDialog.js';
+export { ChartBindingList } from './ChartBindingList/ChartBindingList.js';

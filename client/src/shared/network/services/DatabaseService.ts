@@ -4,8 +4,21 @@ import type { Response } from '../shared/Response.js';
 import type { AxiosError } from 'axios';
 import type { GetRoleDTO } from '../dto/index.js';
 import camelcaseKeys from 'camelcase-keys';
+import type { GetTableMetaDTO } from '../dto/table/GetTableMetaDTO.js';
 
 class DatabaseService {
+  async getTables(dbId: string): Promise<Response<GetTableMetaDTO[]>> {
+    try {
+      const { data } = await network.get<GetTableMetaDTO[]>(
+        `/databases/${dbId}/tables`,
+      );
+
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as AxiosError };
+    }
+  }
+
   async fetchDbUsers(dbId: string): Promise<Response<GetDbUserInfoDTO[]>> {
     try {
       const { data } = await network.get<GetDbUserInfoDTO[]>(

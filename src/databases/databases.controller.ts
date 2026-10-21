@@ -87,4 +87,9 @@ export class DatabasesController {
       file,
     );
   }
+
+  @Get('/:id/tables')
+  getTables(@Param('id') dbId: number) {
+    return this.databasesService.getTables(dbId);
+  }
 }
