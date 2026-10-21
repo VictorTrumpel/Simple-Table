@@ -12,3 +12,4 @@ export * from './DeleteUserAction/index.js';
 export * from './ChangesHistory/index.js';
 export { AddChartBindingDialog } from './AddChartBindingDialog/AddChartBindingDialog.js';
 export { ChartBindingList } from './ChartBindingList/ChartBindingList.js';
+export * from './DeleteBindingAction/index.js';

@@ -10,6 +10,7 @@ import { GraphTreeItem, SuccessAddGraph } from './GraphTreeItem/index.js';
 import { useHistory } from 'react-router-dom';
 import type { GetTreeDatabaseDTO } from '@shared/network';
 import { SuccessDeleteTable } from './TableTreeItem/events/SuccessDeleteTable.js';
+import { SuccessDeleteGraph } from './GraphTreeItem/events/SuccessDeleteGraph.js';
 
 export const DatabaseTreeView = () => {
   const { getTree, handleAddDatabase } = useViewModel();
@@ -44,12 +45,14 @@ export const DatabaseTreeView = () => {
       window.addEventListener(SuccessAddTable, handleUpdateTree);
       window.addEventListener(SuccessAddGraph, handleUpdateTree);
       window.addEventListener(SuccessDeleteTable, handleUpdateTree);
+      window.addEventListener(SuccessDeleteGraph, handleUpdateTree);
     },
     () => {
       window.removeEventListener(SuccessAddDb, handleUpdateTree);
       window.removeEventListener(SuccessAddTable, handleUpdateTree);
       window.removeEventListener(SuccessAddGraph, handleUpdateTree);
       window.removeEventListener(SuccessDeleteTable, handleUpdateTree);
+      window.removeEventListener(SuccessDeleteGraph, handleUpdateTree);
     },
   );
 

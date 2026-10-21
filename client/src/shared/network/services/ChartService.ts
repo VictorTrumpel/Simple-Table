@@ -4,6 +4,31 @@ import type { Response } from '../shared/Response.js';
 import type { GetChartBindingDTO } from '../dto/GetChartBindingDTO.js';
 
 class ChartService {
+  async deleteBinding(
+    chartId: string,
+    bindingId: number,
+  ): Promise<Response<unknown>> {
+    try {
+      const { data } = await network.delete(
+        `/charts/${chartId}/bindings/${bindingId}`,
+      );
+
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as AxiosError };
+    }
+  }
+
+  async deleteChart(chartId: string): Promise<Response<unknown>> {
+    try {
+      const { data } = await network.delete(`/charts/${chartId}`);
+
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as AxiosError };
+    }
+  }
+
   async getBindings(chartId: string): Promise<Response<GetChartBindingDTO[]>> {
     try {
       const { data } = await network.get<GetChartBindingDTO[]>(

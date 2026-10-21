@@ -8,11 +8,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   TextField,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useViewModel } from './hooks/useViewModel.js';
 import { SuccessAddGraph } from './events/SuccessAddGraph.js';
+import { SuccessDeleteGraph } from './events/SuccessDeleteGraph.js';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 type GraphTreeItemProps = {
   dbId: string;
@@ -21,11 +24,34 @@ type GraphTreeItemProps = {
 };
 
 export const GraphTreeItem = ({ dbId, charts, role }: GraphTreeItemProps) => {
-  const { addGraph } = useViewModel();
+  const { addGraph, deleteGraph } = useViewModel();
   const { enqueueSnackbar } = useSnackbar();
   const [openDialog, setOpenDialog] = useState(false);
   const [graphName, setGraphName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [chartToDelete, setChartToDelete] = useState<GetTreeChartDTO | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleCloseDeleteDialog = () => {
+    if (!isDeleting) setChartToDelete(null);
+  };
+
+  const handleDeleteGraph = async () => {
+    if (!chartToDelete || isDeleting || role !== 'admin') return;
+
+    setIsDeleting(true);
+    const response = await deleteGraph(chartToDelete.id);
+    setIsDeleting(false);
+
+    if (response.error) {
+      enqueueSnackbar('Не удалось удалить график!', { variant: 'error' });
+      return;
+    }
+
+    enqueueSnackbar('График успешно удалён!', { variant: 'success' });
+    setChartToDelete(null);
+    window.dispatchEvent(new Event(SuccessDeleteGraph));
+  };
 
   const handleCloseDialog = () => {
     if (isCreating) return;
@@ -68,10 +94,46 @@ export const GraphTreeItem = ({ dbId, charts, role }: GraphTreeItemProps) => {
           <TreeItem
             key={chart.id}
             itemId={`/chart-item/${chart.id}`}
-            label={chart.name}
+            label={
+              <>
+                {chart.name}{' '}
+                {role === 'admin' && (
+                  <IconButton
+                    size="small"
+                    aria-label={`Удалить график ${chart.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setChartToDelete(chart);
+                    }}
+                  >
+                    <DeleteIcon fontSize="inherit" />
+                  </IconButton>
+                )}
+              </>
+            }
           />
         ))}
       </DBTreeItem>
+
+      <Dialog open={Boolean(chartToDelete)} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>Удаление графика</DialogTitle>
+        <DialogContent>
+          Вы уверены, что хотите удалить график <b>{chartToDelete?.name}</b>?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+            Закрыть
+          </Button>
+          <Button
+            loading={isDeleting}
+            variant="contained"
+            color="error"
+            onClick={handleDeleteGraph}
+          >
+            Удалить
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog fullWidth maxWidth="xs" open={openDialog} onClose={handleCloseDialog}>
         <form onSubmit={handleCreateGraph}>

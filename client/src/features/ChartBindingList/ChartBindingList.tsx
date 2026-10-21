@@ -7,6 +7,10 @@ import {
   ListItem,
   Typography,
 } from '@mui/material';
+import {
+  DeleteBindingAction,
+  SuccessDeleteBinding,
+} from '../DeleteBindingAction/index.js';
 import { FaTable } from 'react-icons/fa6';
 import { TbColumns1 } from 'react-icons/tb';
 import { MdDriveFileRenameOutline } from 'react-icons/md';
@@ -42,6 +46,7 @@ export const ChartBindingList = ({ chartId, dbId }: Props) => {
       if (bindingsResponse.error || tablesResponse.error) {
         setHasError(true);
       } else {
+        setHasError(false);
         setBindings(bindingsResponse.data);
         setTables(tablesResponse.data);
       }
@@ -49,8 +54,10 @@ export const ChartBindingList = ({ chartId, dbId }: Props) => {
     };
 
     void loadBindings();
+    window.addEventListener(SuccessDeleteBinding, loadBindings);
     return () => {
       isActive = false;
+      window.removeEventListener(SuccessDeleteBinding, loadBindings);
     };
   }, [chartId, dbId]);
 
@@ -96,9 +103,9 @@ export const ChartBindingList = ({ chartId, dbId }: Props) => {
               background: (theme) => theme.palette.grey[200],
               borderRadius: '8px',
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr)) auto',
               columnGap: 2,
-              alignItems: 'start',
+              alignItems: 'center',
               py: 1,
             }}
           >
@@ -138,6 +145,11 @@ export const ChartBindingList = ({ chartId, dbId }: Props) => {
                 Имя: {binding.bindingKey}
               </Typography>
             </Box>
+            <DeleteBindingAction
+              chartId={chartId}
+              id={binding.id}
+              bindingKey={binding.bindingKey}
+            />
           </ListItem>
         );
       })}

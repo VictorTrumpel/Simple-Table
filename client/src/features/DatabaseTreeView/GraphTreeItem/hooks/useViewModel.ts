@@ -5,5 +5,9 @@ export const useViewModel = () => {
     return await chartService.addEmptyChartToDatabase(graphName, dbId);
   };
 
-  return { addGraph };
+  const deleteGraph = async (chartId: string) => {
+    return await chartService.deleteChart(chartId);
+  };
+
+  return { addGraph, deleteGraph };
 };

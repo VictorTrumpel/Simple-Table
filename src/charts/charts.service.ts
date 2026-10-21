@@ -64,4 +64,18 @@ export class ChartsService {
   getBindings(chartId: number) {
     return this.bindingRepository.find({ where: { chartId } });
   }
+
+  deleteChart(chartId: number) {
+    return this.entityManager.transaction(async (manager) => {
+      const chartRepo = manager.getRepository(ChartEntity);
+      const chartBindingRepo = manager.getRepository(ChartBindingsEntity);
+
+      await chartRepo.delete({ id: chartId });
+      await chartBindingRepo.delete({ chartId: chartId });
+    });
+  }
+
+  deleteBinding(chartId: number, bindingId: number) {
+    return this.bindingRepository.delete({ id: bindingId, chartId });
+  }
 }
