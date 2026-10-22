@@ -31,4 +31,9 @@ export class ChartsController {
   deleteChart(@Param('id') chartId: number) {
     return this.chartsService.deleteChart(chartId);
   }
+
+  @Get('/:id/data')
+  getChartData(@Param('id') chartId: number) {
+    return this.chartsService.getChartData(chartId);
+  }
 }

@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { TableRowDto } from '../dto/GetTableDto';
 import { Table } from '../entities/table.entity';
 import { SetCellValueDto } from '../dto/SetCellValueDto';
+import { NotFoundError } from 'rxjs';
 
 export type ReadTableQuery = {
   page?: number;
@@ -12,6 +13,9 @@ export type ReadTableQuery = {
   filterBy?: string;
   filterValue?: string;
 };
+
+type TableId = string;
+type ColId = string;
 
 @Injectable()
 export class DynTableRepository {
@@ -207,6 +211,54 @@ export class DynTableRepository {
     query.addOrderBy('row.sort_index_version', 'DESC');
 
     return query.getRawMany();
+  }
+
+  readTableWithCols(tableId: string, colIds: string[], needPrefix?: boolean) {
+    return this.entityManager.transaction(async (manager) => {
+      const tableRepo = manager.getRepository(Table);
+
+      if (!colIds) {
+        throw new NotFoundException({
+          message: `Cols id not passed`,
+        });
+      }
+
+      const tableMeta = await tableRepo.findOneBy({ id: tableId });
+
+      if (!tableMeta) {
+        throw new NotFoundException({
+          message: `Table with id: ${tableId} not found`,
+        });
+      }
+
+      const mapColIdToName = new Map<string, string>(
+        tableMeta.columns.map((col) => [col.id, col.name]),
+      );
+
+      const existingColIds = new Set(tableMeta.columns.map(({ id }) => id));
+
+      for (const colId of colIds) {
+        if (!existingColIds.has(colId)) {
+          throw new NotFoundException({
+            message: `Col with id ${colId} not found`,
+          });
+        }
+      }
+
+      const selector = colIds.map((colId) => {
+        const colName = mapColIdToName.get(colId) ?? '';
+
+        const prefix = needPrefix ? `${tableMeta.name}_` : '';
+
+        return `${colId} as "${prefix}${colName}"`;
+      });
+
+      const table = await manager.query<Record<string, unknown>[]>(/*sql*/ `
+          SELECT ${selector.join(',')} FROM "${this.tableSpace}".${tableId}
+        `);
+
+      return table;
+    });
   }
 
   async getTotalRowsOfTable(
