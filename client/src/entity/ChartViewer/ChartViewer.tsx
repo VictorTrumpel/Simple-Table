@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Box, CircularProgress, useTheme } from '@mui/material';
 import perspective, { type Client, type Table } from '@perspective-dev/client';
 import { PerspectiveViewer } from '@perspective-dev/react';
@@ -14,9 +14,11 @@ type Props = {
 
 type ViewerState = {
   data: Props['data'];
-  table?: Table;
+  client?: Client;
   error?: boolean;
 };
+
+const TABLE_NAME = 'chart';
 
 export const ChartViewer = ({
   data,
@@ -28,18 +30,9 @@ export const ChartViewer = ({
   );
   const [state, setState] = useState<ViewerState | null>();
 
-  const isFirstMount = useRef(true);
-
   const theme = useTheme();
 
-  const chartRef = useRef<HTMLDivElement>(null);
-
   const handleUpdateConfig = (config: ViewerConfigUpdate) => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
-
     setLocalConfig(config);
     onConfigUpdate?.(config);
   };
@@ -58,8 +51,8 @@ export const ChartViewer = ({
       client = await perspective.worker();
       if (!isActive) return;
 
-      table = await client.table(data);
-      if (isActive) setState({ data, table });
+      table = await client.table(data, { name: TABLE_NAME });
+      if (isActive) setState({ data, client });
     };
 
     const ready = loadTable()
@@ -92,7 +85,6 @@ export const ChartViewer = ({
 
   return (
     <Box
-      ref={chartRef}
       flex={1}
       alignSelf="stretch"
       minWidth={0}
@@ -105,9 +97,11 @@ export const ChartViewer = ({
     >
       {currentState?.error ? (
         <Alert severity="error">Не удалось отобразить график</Alert>
-      ) : currentState?.table ? (
+      ) : currentState?.client ? (
         <PerspectiveViewer
-          client={currentState.table}
+          // Loading a Table again resets its config in @perspective-dev/react.
+          // A Client can be reloaded safely; restore() selects its named table.
+          client={currentState.client}
           style={{
             width: '100%',
             height: '100%',
@@ -115,7 +109,7 @@ export const ChartViewer = ({
             fontFamily: theme.typography.fontFamily,
           }}
           onConfigUpdate={handleUpdateConfig}
-          config={localConfig ?? {}}
+          config={{ ...localConfig, table: TABLE_NAME }}
         />
       ) : (
         <CircularProgress aria-label="Подготовка графика" />

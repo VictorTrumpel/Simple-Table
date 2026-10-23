@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import type { ViewerConfigUpdate } from '@perspective-dev/viewer';
 import { useSnackbar } from 'notistack';
@@ -22,7 +22,7 @@ type ChartState = {
 
 export const PerspectiveChart = ({ chartId }: Props) => {
   const [state, setState] = useState<ChartState | null>(null);
-  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -34,6 +34,7 @@ export const PerspectiveChart = ({ chartId }: Props) => {
         chartService.getData(chartId, controller.signal),
         chartService.getChartMeta(chartId, controller.signal),
       ]);
+
       if (controller.signal.aborted) return;
 
       if (response.error || metadata.error || !metadata.data) {
@@ -47,24 +48,20 @@ export const PerspectiveChart = ({ chartId }: Props) => {
       }
     };
 
-    void loadData();
+    loadData();
+
     return () => controller.abort();
   }, [chartId]);
 
-  const handleConfigUpdate = useCallback(
-    (config: ViewerConfigUpdate) => {
-      // Keep writes ordered so a slower request cannot overwrite newer settings.
-      saveQueue.current = saveQueue.current.then(async () => {
-        const response = await chartService.updateConfig(chartId, config);
-        if (response.error) {
-          enqueueSnackbar('Не удалось сохранить настройки графика!', {
-            variant: 'error',
-          });
-        }
+  const handleConfigUpdate = async (config: ViewerConfigUpdate) => {
+    const response = await chartService.updateConfig(chartId, config);
+
+    if (response.error) {
+      enqueueSnackbar('Не удалось сохранить настройки графика!', {
+        variant: 'error',
       });
-    },
-    [chartId, enqueueSnackbar],
-  );
+    }
+  };
 
   const currentState = state?.chartId === chartId ? state : null;
 

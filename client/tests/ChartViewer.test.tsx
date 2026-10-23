@@ -44,12 +44,12 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-it('passes the created table to PerspectiveViewer and disposes it on unmount', async () => {
+it('passes the client and named table config to PerspectiveViewer and disposes the table on unmount', async () => {
   const view = render(<ChartViewer data={data} />);
   await screen.findByTestId('viewer');
-  expect(client.table).toHaveBeenCalledWith(data);
+  expect(client.table).toHaveBeenCalledWith(data, { name: 'chart' });
   expect(mocks.viewer).toHaveBeenLastCalledWith(
-    expect.objectContaining({ client: table }),
+    expect.objectContaining({ client, config: { table: 'chart' } }),
   );
 
   view.unmount();
@@ -62,16 +62,21 @@ it('uses the default config when no config is provided', async () => {
   render(<ChartViewer data={data} />);
   await screen.findByTestId('viewer');
   expect(mocks.viewer).toHaveBeenLastCalledWith(
-    expect.objectContaining({ config: { plugin: 'Y Line', settings: true } }),
+    expect.objectContaining({ config: { table: 'chart' } }),
   );
 });
 
-it('overrides defaults with the provided config and forwards changes', async () => {
+it('keeps user config changes in state and forwards them without recreating the client', async () => {
   const onConfigUpdate = vi.fn();
   render(
     <ChartViewer
       data={data}
-      config={{ plugin: 'Y Bar', settings: false, columns: ['value'] }}
+      config={{
+        plugin: 'Y Bar',
+        settings: false,
+        columns: ['value'],
+        table: 'old-table',
+      }}
       onConfigUpdate={onConfigUpdate}
     />,
   );
@@ -83,10 +88,16 @@ it('overrides defaults with the provided config and forwards changes', async () 
     plugin: 'Y Bar',
     settings: false,
     columns: ['value'],
+    table: 'chart',
   });
-  const nextConfig = { plugin: 'X Bar', settings: true };
-  props.onConfigUpdate!(nextConfig);
+  const nextConfig = { plugin: 'X Bar', settings: true, group_by: ['category'] };
+  act(() => props.onConfigUpdate!(nextConfig));
   expect(onConfigUpdate).toHaveBeenCalledExactlyOnceWith(nextConfig);
+  expect(mocks.viewer).toHaveBeenLastCalledWith(
+    expect.objectContaining({ client, config: { ...nextConfig, table: 'chart' } }),
+  );
+  expect(mocks.worker).toHaveBeenCalledOnce();
+  expect(client.table).toHaveBeenCalledOnce();
 });
 
 it('does not create a worker when unmounted during WASM initialization', async () => {
@@ -133,11 +144,12 @@ it('releases the old resources when data changes', async () => {
   const view = render(<ChartViewer data={data} />);
   await screen.findByTestId('viewer');
   const nextTable = { name: 'next' };
-  client.table.mockResolvedValueOnce(nextTable);
+  const nextClient = { table: vi.fn().mockResolvedValue(nextTable) };
+  mocks.worker.mockResolvedValueOnce(nextClient);
   view.rerender(<ChartViewer data={[{ category: 'B', value: 7 }]} />);
   await waitFor(() =>
     expect(mocks.viewer).toHaveBeenLastCalledWith(
-      expect.objectContaining({ client: nextTable }),
+      expect.objectContaining({ client: nextClient, config: { table: 'chart' } }),
     ),
   );
   expect(mocks.dispose).toHaveBeenCalledWith(client, table);
