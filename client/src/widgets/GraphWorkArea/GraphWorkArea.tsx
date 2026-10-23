@@ -8,7 +8,11 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { MenuGraphWork, type GraphMenuPanel } from '@entity';
-import { AddChartBindingDialog, ChartBindingList } from '@features';
+import {
+  AddChartBindingDialog,
+  ChartBindingList,
+  PerspectiveChart,
+} from '@features';
 import { useParams } from 'react-router-dom';
 import { treeDatabaseService, type GetTreeChartDTO } from '@shared/network';
 
@@ -109,16 +113,7 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
             marginTop="10px"
           >
             {activePanel === 'chart' ? (
-              <Box
-                flex={1}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Typography color="text.secondary">
-                  Нет данных для графика
-                </Typography>
-              </Box>
+              <PerspectiveChart chartId={chartId} />
             ) : (
               <Box
                 display="flex"

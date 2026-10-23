@@ -1,0 +1,4 @@
+perspective-viewer {
+  --psp-status-bar--display: none;
+  --psp-sidebar--background: rgb(244 244 245 / 1);
+}

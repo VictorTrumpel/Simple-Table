@@ -1,6 +1,15 @@
-import { Body, Controller, Param, Post, Get, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  Post,
+  Get,
+  Delete,
+  Put,
+} from '@nestjs/common';
 import { CreateBindingDto } from './dto/CreateBindingDto';
 import { ChartsService } from './charts.service';
+import { UpdateConfigDto } from './dto/UpdateConfigDto';
 
 @Controller('charts')
 export class ChartsController {
@@ -30,6 +39,14 @@ export class ChartsController {
   @Delete('/:id')
   deleteChart(@Param('id') chartId: number) {
     return this.chartsService.deleteChart(chartId);
+  }
+
+  @Put('/:id/config')
+  updateChartConfig(
+    @Param('id') chartId: number,
+    @Body() payload: UpdateConfigDto,
+  ) {
+    return this.chartsService.updateConfig(chartId, payload.config);
   }
 
   @Get('/:id/data')

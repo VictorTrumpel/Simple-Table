@@ -2,8 +2,25 @@ import type { AxiosError } from 'axios';
 import { network } from '../shared/network.js';
 import type { Response } from '../shared/Response.js';
 import type { GetChartBindingDTO } from '../dto/GetChartBindingDTO.js';
+import type { GetChartDataDTO } from '../dto/GetChartDataDTO.js';
 
 class ChartService {
+  async getData(
+    chartId: string,
+    signal?: AbortSignal,
+  ): Promise<Response<GetChartDataDTO>> {
+    try {
+      const { data } = await network.get<GetChartDataDTO>(
+        `/charts/${chartId}/data`,
+        { signal },
+      );
+
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as AxiosError };
+    }
+  }
+
   async deleteBinding(
     chartId: string,
     bindingId: number,

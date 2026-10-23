@@ -13,6 +13,8 @@ export class ChartsService {
     private entityManager: EntityManager,
     @InjectRepository(ChartBindingsEntity)
     private bindingRepository: Repository<ChartBindingsEntity>,
+    @InjectRepository(ChartEntity)
+    private chartRepository: Repository<ChartEntity>,
     private dynTableFactory: DynTableFactory,
   ) {}
 
@@ -79,6 +81,22 @@ export class ChartsService {
 
   deleteBinding(chartId: number, bindingId: number) {
     return this.bindingRepository.delete({ id: bindingId, chartId });
+  }
+
+  async updateConfig(chartId: number, config: Record<string, unknown>) {
+    const chartMeta = await this.chartRepository.findOneBy({
+      id: chartId,
+    });
+
+    if (!chartMeta) {
+      throw new NotFoundException({
+        message: `Chart with id ${chartId} does not exist`,
+      });
+    }
+
+    chartMeta.config = config;
+
+    await this.chartRepository.save(chartMeta);
   }
 
   getChartData(chartId: number) {

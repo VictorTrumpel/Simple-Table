@@ -3,6 +3,7 @@ export * from './DBTreeItem/index.js';
 export * from './CreateTableButton/index.js';
 export * from './MenuTableWork/index.js';
 export * from './MenuGraphWork/index.js';
+export * from './ChartViewer/index.js';
 export * from './Background/index.js';
 export * from './TablePaginator/index.js';
 export * from './FilterPanel/index.js';

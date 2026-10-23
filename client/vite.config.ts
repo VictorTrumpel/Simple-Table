@@ -4,6 +4,9 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    target: "esnext",
+  },
   resolve: {
     alias: {
       "@entity": path.resolve(__dirname, "src/entity"),
