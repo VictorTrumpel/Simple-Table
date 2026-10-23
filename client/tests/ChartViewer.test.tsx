@@ -1,4 +1,4 @@
-import { StrictMode, type ComponentProps } from 'react';
+import { createElement, StrictMode, type ComponentProps } from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ChartViewer } from '../src/entity/ChartViewer/ChartViewer';
@@ -20,7 +20,7 @@ vi.mock('../src/entity/ChartViewer/perspective', () => ({
 vi.mock('@perspective-dev/react', () => ({
   PerspectiveViewer: (props: unknown) => {
     mocks.viewer(props);
-    return <div data-testid="viewer" />;
+    return createElement('perspective-viewer', { 'data-testid': 'viewer' });
   },
 }));
 
@@ -98,6 +98,54 @@ it('keeps user config changes in state and forwards them without recreating the 
   );
   expect(mocks.worker).toHaveBeenCalledOnce();
   expect(client.table).toHaveBeenCalledOnce();
+});
+
+it('keeps settings closed and does not persist config when settings are disabled', async () => {
+  const onConfigUpdate = vi.fn();
+  render(
+    <ChartViewer
+      data={data}
+      config={{ plugin: 'Y Bar', settings: true, columns: ['value'] }}
+      settingsEnabled={false}
+      onConfigUpdate={onConfigUpdate}
+    />,
+  );
+  const viewer = await screen.findByTestId('viewer');
+  const toggleConfig = vi.fn().mockResolvedValue(undefined);
+  Object.assign(viewer, { toggleConfig });
+  const props = mocks.viewer.mock.lastCall![0] as ComponentProps<
+    typeof import('@perspective-dev/react').PerspectiveViewer
+  >;
+  expect(props.config).toEqual({
+    plugin: 'Y Bar',
+    settings: false,
+    columns: ['value'],
+    table: 'chart',
+  });
+
+  await act(async () => props.onConfigUpdate!({ settings: true }));
+  expect(toggleConfig).toHaveBeenCalledExactlyOnceWith(false);
+  expect(onConfigUpdate).not.toHaveBeenCalled();
+});
+
+it('blocks the settings button inside the Perspective shadow root', async () => {
+  render(<ChartViewer data={data} settingsEnabled={false} />);
+  const viewer = await screen.findByTestId('viewer');
+  const shadow = viewer.attachShadow({ mode: 'open' });
+  const button = document.createElement('button');
+  button.className = 'psp-tab-settings';
+  shadow.append(button);
+  const openSettings = vi.fn();
+  button.addEventListener('pointerdown', openSettings);
+
+  act(() => {
+    button.dispatchEvent(new MouseEvent('pointerdown', {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }));
+  });
+  expect(openSettings).not.toHaveBeenCalled();
 });
 
 it('does not create a worker when unmounted during WASM initialization', async () => {

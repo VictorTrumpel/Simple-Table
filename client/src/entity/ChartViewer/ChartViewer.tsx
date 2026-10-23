@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import { Alert, Box, CircularProgress, useTheme } from '@mui/material';
 import perspective, { type Client, type Table } from '@perspective-dev/client';
 import { PerspectiveViewer } from '@perspective-dev/react';
-import type { ViewerConfigUpdate } from '@perspective-dev/viewer';
+import type {
+  HTMLPerspectiveViewerElement,
+  ViewerConfigUpdate,
+} from '@perspective-dev/viewer';
 import { disposeChartTable, initializePerspective } from './perspective.js';
 import './ChartViewer.css';
 
 type Props = {
   data: Record<string, unknown>[];
   config?: ViewerConfigUpdate;
+  settingsEnabled?: boolean;
   onConfigUpdate?: (config: ViewerConfigUpdate) => void;
 };
 
@@ -23,8 +27,10 @@ const TABLE_NAME = 'chart';
 export const ChartViewer = ({
   data,
   config: defaultConfig,
+  settingsEnabled = true,
   onConfigUpdate,
 }: Props) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [localConfig, setLocalConfig] = useState<ViewerConfigUpdate>(
     defaultConfig ?? {},
   );
@@ -33,8 +39,30 @@ export const ChartViewer = ({
   const theme = useTheme();
 
   const handleUpdateConfig = (config: ViewerConfigUpdate) => {
-    setLocalConfig(config);
-    onConfigUpdate?.(config);
+    setLocalConfig(settingsEnabled ? config : { ...config, settings: false });
+    if (settingsEnabled) {
+      onConfigUpdate?.(config);
+    } else if (config.settings) {
+      const viewer = containerRef.current?.querySelector<HTMLPerspectiveViewerElement>(
+        'perspective-viewer',
+      );
+      void viewer?.toggleConfig(false).catch((error: unknown) => {
+        console.error('Не удалось закрыть настройки графика', error);
+      });
+    }
+  };
+
+  const handleSettingsInteraction = (event: SyntheticEvent) => {
+    if (settingsEnabled) return;
+
+    // Perspective renders its settings button inside a shadow root.
+    const isSettingsButton = event.nativeEvent.composedPath().some(
+      (target) => target instanceof Element && target.matches('.psp-tab-settings'),
+    );
+    if (isSettingsButton) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   };
 
   useEffect(() => {
@@ -85,6 +113,9 @@ export const ChartViewer = ({
 
   return (
     <Box
+      ref={containerRef}
+      onPointerDownCapture={handleSettingsInteraction}
+      onClickCapture={handleSettingsInteraction}
       flex={1}
       alignSelf="stretch"
       minWidth={0}
@@ -109,7 +140,11 @@ export const ChartViewer = ({
             fontFamily: theme.typography.fontFamily,
           }}
           onConfigUpdate={handleUpdateConfig}
-          config={{ ...localConfig, table: TABLE_NAME }}
+          config={{
+            ...localConfig,
+            ...(!settingsEnabled && { settings: false }),
+            table: TABLE_NAME,
+          }}
         />
       ) : (
         <CircularProgress aria-label="Подготовка графика" />

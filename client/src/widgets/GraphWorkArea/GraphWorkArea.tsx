@@ -14,7 +14,11 @@ import {
   PerspectiveChart,
 } from '@features';
 import { useParams } from 'react-router-dom';
-import { treeDatabaseService, type GetTreeChartDTO } from '@shared/network';
+import {
+  treeDatabaseService,
+  type GetRoleDTO,
+  type GetTreeChartDTO,
+} from '@shared/network';
 
 export const GraphWorkArea = () => {
   const { chartId } = useParams<{ chartId: string }>();
@@ -28,8 +32,10 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dbId, setDbId] = useState<string | null>(null);
+  const [role, setRole] = useState<GetRoleDTO>(null);
   const [isBindingDialogOpen, setIsBindingDialogOpen] = useState(false);
   const [bindingsVersion, setBindingsVersion] = useState(0);
+  const canAddBinding = role === 'admin' || role === 'writer';
 
   useEffect(() => {
     let isActive = true;
@@ -52,6 +58,7 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
         if (selectedChart && database) {
           setChart(selectedChart);
           setDbId(String(database.id));
+          setRole(database.role);
         } else {
           setError('График не найден');
         }
@@ -113,7 +120,10 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
             marginTop="10px"
           >
             {activePanel === 'chart' ? (
-              <PerspectiveChart chartId={chartId} />
+              <PerspectiveChart
+                chartId={chartId}
+                settingsEnabled={role === 'admin' || role === 'writer'}
+              />
             ) : (
               <Box
                 display="flex"
@@ -123,14 +133,16 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
                 flex={1}
                 overflow="auto"
               >
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setIsBindingDialogOpen(true)}
-                  sx={{ borderRadius: '8px' }}
-                >
-                  Добавить ссылку на колонку
-                </Button>
+                {canAddBinding && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => setIsBindingDialogOpen(true)}
+                    sx={{ borderRadius: '8px' }}
+                  >
+                    Добавить ссылку на колонку
+                  </Button>
+                )}
                 {dbId && (
                   <ChartBindingList
                     key={bindingsVersion}
@@ -143,7 +155,7 @@ const GraphWorkAreaContent = ({ chartId }: { chartId: string }) => {
           </Box>
         </>
       )}
-      {isBindingDialogOpen && dbId && (
+      {canAddBinding && isBindingDialogOpen && dbId && (
         <AddChartBindingDialog
           chartId={chartId}
           dbId={dbId}

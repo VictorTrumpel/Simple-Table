@@ -60,8 +60,20 @@ it('shows a loader while requesting the selected chart and passes data to ChartV
   expect(mocks.viewer).toHaveBeenLastCalledWith({
     data,
     config,
+    settingsEnabled: true,
     onConfigUpdate: expect.any(Function),
   });
+});
+
+it('disables settings and saving config for a reader', async () => {
+  mocks.getData.mockResolvedValueOnce({ data: [{ value: 12 }], error: null });
+  render(<PerspectiveChart chartId="12" settingsEnabled={false} />);
+  await screen.findByTestId('chart');
+  expect(mocks.viewer).toHaveBeenLastCalledWith(expect.objectContaining({
+    settingsEnabled: false,
+    onConfigUpdate: undefined,
+  }));
+  expect(mocks.updateConfig).not.toHaveBeenCalled();
 });
 
 it('waits for metadata before displaying the chart', async () => {

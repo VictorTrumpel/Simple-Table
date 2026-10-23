@@ -18,6 +18,7 @@ import {
   chartService,
   databaseService,
   type GetChartBindingDTO,
+  type GetRoleDTO,
 } from '@shared/network';
 import type { GetTableMetaDTO } from '../../shared/network/dto/table/GetTableMetaDTO.js';
 
@@ -31,17 +32,22 @@ export const ChartBindingList = ({ chartId, dbId }: Props) => {
   const [tables, setTables] = useState<GetTableMetaDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [role, setRole] = useState<GetRoleDTO>(null);
+  const canDeleteBinding = role === 'admin' || role === 'writer';
 
   useEffect(() => {
     let isActive = true;
 
     const loadBindings = async () => {
-      const [bindingsResponse, tablesResponse] = await Promise.all([
+      const [bindingsResponse, tablesResponse, roleResponse] = await Promise.all([
         chartService.getBindings(chartId),
         databaseService.getTables(dbId),
+        databaseService.getRole(dbId),
       ]);
 
       if (!isActive) return;
+
+      setRole(roleResponse.error ? null : roleResponse.data.role);
 
       if (bindingsResponse.error || tablesResponse.error) {
         setHasError(true);
@@ -103,7 +109,9 @@ export const ChartBindingList = ({ chartId, dbId }: Props) => {
               background: (theme) => theme.palette.grey[200],
               borderRadius: '8px',
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr)) auto',
+              gridTemplateColumns: canDeleteBinding
+                ? 'repeat(3, minmax(0, 1fr)) auto'
+                : 'repeat(3, minmax(0, 1fr))',
               columnGap: 2,
               alignItems: 'center',
               py: 1,
@@ -145,11 +153,13 @@ export const ChartBindingList = ({ chartId, dbId }: Props) => {
                 Имя: {binding.bindingKey}
               </Typography>
             </Box>
-            <DeleteBindingAction
-              chartId={chartId}
-              id={binding.id}
-              bindingKey={binding.bindingKey}
-            />
+            {canDeleteBinding && (
+              <DeleteBindingAction
+                chartId={chartId}
+                id={binding.id}
+                bindingKey={binding.bindingKey}
+              />
+            )}
           </ListItem>
         );
       })}

@@ -6,12 +6,15 @@ import {
   Get,
   Delete,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateBindingDto } from './dto/CreateBindingDto';
 import { ChartsService } from './charts.service';
 import { UpdateConfigDto } from './dto/UpdateConfigDto';
+import { ChartGuard } from './guards/ChartGuard';
 
 @Controller('charts')
+@UseGuards(ChartGuard)
 export class ChartsController {
   constructor(private chartsService: ChartsService) {}
 

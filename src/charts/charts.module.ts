@@ -6,10 +6,16 @@ import { ChartBindingsEntity } from './entities/chartBindings.entity';
 import { Table } from 'src/tables/entities/table.entity';
 import { ChartEntity } from './entities/chart.entity';
 import { TablesModule } from 'src/tables/tables.module';
+import { UsersDatabases } from 'src/databases/entities/usersDatabases.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChartBindingsEntity, Table, ChartEntity]),
+    TypeOrmModule.forFeature([
+      ChartBindingsEntity,
+      Table,
+      ChartEntity,
+      UsersDatabases,
+    ]),
     TablesModule,
   ],
   controllers: [ChartsController],

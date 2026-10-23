@@ -11,6 +11,7 @@ import {
 
 type Props = {
   chartId: string;
+  settingsEnabled?: boolean;
 };
 
 type ChartState = {
@@ -20,7 +21,7 @@ type ChartState = {
   error?: boolean;
 };
 
-export const PerspectiveChart = ({ chartId }: Props) => {
+export const PerspectiveChart = ({ chartId, settingsEnabled = true }: Props) => {
   const [state, setState] = useState<ChartState | null>(null);
 
   const { enqueueSnackbar } = useSnackbar();
@@ -82,7 +83,8 @@ export const PerspectiveChart = ({ chartId }: Props) => {
         <ChartViewer
           data={currentState.data}
           config={currentState.config}
-          onConfigUpdate={handleConfigUpdate}
+          settingsEnabled={settingsEnabled}
+          onConfigUpdate={settingsEnabled ? handleConfigUpdate : undefined}
         />
       ) : (
         <Typography color="text.secondary">Нет данных для графика</Typography>
