@@ -3,6 +3,7 @@ export type { GetTreeTableDTO } from './GetTreeTableDTO.js';
 export type { GetTreeChartDTO } from './GetTreeChartDTO.js';
 export type { GetChartBindingDTO } from './GetChartBindingDTO.js';
 export type { GetChartDataDTO } from './GetChartDataDTO.js';
+export type { GetChartDTO } from './GetChartDTO.js';
 export type { GetTreeDatabaseDTO } from './GetTreeDatabaseDTO.js';
 export type { GetTreeQueryDTO } from './GetTreeQueryDTO.js';
 export type { CreateColumnDTO } from './CreateColumnDTO.js';

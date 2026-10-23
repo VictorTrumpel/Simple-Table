@@ -18,6 +18,10 @@ export class ChartsService {
     private dynTableFactory: DynTableFactory,
   ) {}
 
+  getChartMeta(chartId: number) {
+    return this.chartRepository.findOneBy({ id: chartId });
+  }
+
   createBindingDto(chartId: number, createBindingDto: CreateBindingDto) {
     return this.entityManager.transaction(async (manager) => {
       const tableRepository = manager.getRepository(Table);

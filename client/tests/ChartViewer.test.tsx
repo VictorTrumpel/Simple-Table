@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, type ComponentProps } from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ChartViewer } from '../src/entity/ChartViewer/ChartViewer';
@@ -56,6 +56,37 @@ it('passes the created table to PerspectiveViewer and disposes it on unmount', a
   await waitFor(() =>
     expect(mocks.dispose).toHaveBeenCalledExactlyOnceWith(client, table),
   );
+});
+
+it('uses the default config when no config is provided', async () => {
+  render(<ChartViewer data={data} />);
+  await screen.findByTestId('viewer');
+  expect(mocks.viewer).toHaveBeenLastCalledWith(
+    expect.objectContaining({ config: { plugin: 'Y Line', settings: true } }),
+  );
+});
+
+it('overrides defaults with the provided config and forwards changes', async () => {
+  const onConfigUpdate = vi.fn();
+  render(
+    <ChartViewer
+      data={data}
+      config={{ plugin: 'Y Bar', settings: false, columns: ['value'] }}
+      onConfigUpdate={onConfigUpdate}
+    />,
+  );
+  await screen.findByTestId('viewer');
+  const props = mocks.viewer.mock.lastCall![0] as ComponentProps<
+    typeof import('@perspective-dev/react').PerspectiveViewer
+  >;
+  expect(props.config).toEqual({
+    plugin: 'Y Bar',
+    settings: false,
+    columns: ['value'],
+  });
+  const nextConfig = { plugin: 'X Bar', settings: true };
+  props.onConfigUpdate!(nextConfig);
+  expect(onConfigUpdate).toHaveBeenCalledExactlyOnceWith(nextConfig);
 });
 
 it('does not create a worker when unmounted during WASM initialization', async () => {

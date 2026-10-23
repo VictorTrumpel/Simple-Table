@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Box, CircularProgress, useTheme } from '@mui/material';
 import perspective, { type Client, type Table } from '@perspective-dev/client';
 import { PerspectiveViewer } from '@perspective-dev/react';
+import type { ViewerConfigUpdate } from '@perspective-dev/viewer';
 import { disposeChartTable, initializePerspective } from './perspective.js';
 import './ChartViewer.css';
 
 type Props = {
   data: Record<string, unknown>[];
+  config?: ViewerConfigUpdate;
+  onConfigUpdate?: (config: ViewerConfigUpdate) => void;
 };
 
 type ViewerState = {
@@ -15,12 +18,31 @@ type ViewerState = {
   error?: boolean;
 };
 
-export const ChartViewer = ({ data }: Props) => {
-  const [state, setState] = useState<ViewerState | null>(null);
+export const ChartViewer = ({
+  data,
+  config: defaultConfig,
+  onConfigUpdate,
+}: Props) => {
+  const [localConfig, setLocalConfig] = useState<ViewerConfigUpdate>(
+    defaultConfig ?? {},
+  );
+  const [state, setState] = useState<ViewerState | null>();
+
+  const isFirstMount = useRef(true);
 
   const theme = useTheme();
 
   const chartRef = useRef<HTMLDivElement>(null);
+
+  const handleUpdateConfig = (config: ViewerConfigUpdate) => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    setLocalConfig(config);
+    onConfigUpdate?.(config);
+  };
 
   useEffect(() => {
     setState(null);
@@ -92,11 +114,8 @@ export const ChartViewer = ({ data }: Props) => {
             fontSize: theme.typography.body1.fontSize,
             fontFamily: theme.typography.fontFamily,
           }}
-          // onConfigUpdate={console.log}
-          config={{
-            plugin: 'Y Line',
-            settings: true,
-          }}
+          onConfigUpdate={handleUpdateConfig}
+          config={localConfig ?? {}}
         />
       ) : (
         <CircularProgress aria-label="Подготовка графика" />

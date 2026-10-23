@@ -15,6 +15,11 @@ import { UpdateConfigDto } from './dto/UpdateConfigDto';
 export class ChartsController {
   constructor(private chartsService: ChartsService) {}
 
+  @Get('/:id')
+  getChartMeta(@Param('id') chartId: number) {
+    return this.chartsService.getChartMeta(chartId);
+  }
+
   @Post('/:id/binding')
   addBinding(
     @Body() createBindingDto: CreateBindingDto,
