@@ -46,7 +46,7 @@ export const PaticipantOfDB = () => {
     const roleResponse = await checkRole(String(dbId));
 
     if (roleResponse.error) {
-      enqueueSnackbar('Не удалось установить рлоль!', { variant: 'error' });
+      enqueueSnackbar('Не удалось установить роль!', { variant: 'error' });
       return;
     }
 

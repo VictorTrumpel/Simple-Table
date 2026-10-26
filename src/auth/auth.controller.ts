@@ -4,6 +4,7 @@ import { LoginDto } from './dto/LoginDto';
 import { CreateUserDTO } from './dto/CreateUserDto';
 import { Public } from './decorators/Public';
 import { CurrentUserId } from './decorators/CurrentUserId';
+import { AuthGoogleDto } from './dto/AuthGoogleDto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,5 +25,11 @@ export class AuthController {
   @Get('/info')
   info(@CurrentUserId() userId: number) {
     return this.authService.getUserById(userId);
+  }
+
+  @Post('/google/login')
+  @Public()
+  async authGoogle(@Body() authGoogleDto: AuthGoogleDto) {
+    return this.authService.loginGoogleUser(authGoogleDto.googleCredential);
   }
 }

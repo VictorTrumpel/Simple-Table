@@ -3,9 +3,10 @@ import { Box, TextField, Typography, Button } from '@mui/material';
 import { useViewModel } from './hooks/useViewModel.js';
 import { useSnackbar } from 'notistack';
 import { useHistory } from 'react-router-dom';
+import { GoogleAuth } from '../../entity/GoogleAuth/index.js';
 
 export const LogInForm = () => {
-  const { authUserByData, setUserInfo } = useViewModel();
+  const { authUserByData, googleLogin, setUserInfo } = useViewModel();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -40,6 +41,21 @@ export const LogInForm = () => {
 
   const handleGoToCreateAccaunt = () => {
     history.push('/registration');
+  };
+
+  const handleGoogleLogin = async (credential: string) => {
+    setIsLoading(true);
+    const response = await googleLogin(credential);
+    setIsLoading(false);
+
+    if (response.error) {
+      enqueueSnackbar('Не удалось войти через Google. Попробуйте ещё раз.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    setUserInfo(response.data);
   };
 
   const isValid = () => {
@@ -109,10 +125,12 @@ export const LogInForm = () => {
 
         <Typography sx={{ display: 'flex' }}>или</Typography>
 
+        <GoogleAuth onSuccess={handleGoogleLogin} />
+
         <Button
           fullWidth
           loading={isLoading}
-          type="submit"
+          type="button"
           variant="outlined"
           onClick={handleGoToCreateAccaunt}
         >

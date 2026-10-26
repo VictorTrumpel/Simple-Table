@@ -24,6 +24,13 @@ export class User {
   })
   passwordHash!: string;
 
+  @Column({
+    name: 'google_sub',
+    type: 'text',
+    select: false,
+  })
+  googleSub!: string;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamptz',

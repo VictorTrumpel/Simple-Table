@@ -10,11 +10,15 @@ export const useViewModel = () => {
     return await userService.login(userDto);
   };
 
+  const googleLogin = async (credential: string) => {
+    return await userService.googleLogin(credential);
+  };
+
   const setUserInfo = (getUserDTO: GetUserDTO) => {
     localStorage.setItem('authToken', getUserDTO.token);
     network.defaults.headers.common.Authorization = `Bearer ${getUserDTO.token}`;
     dispatch(userInfoActions.setUserInfo(getUserDTO.userInfo));
   };
 
-  return { authUserByData, setUserInfo };
+  return { authUserByData, googleLogin, setUserInfo };
 };

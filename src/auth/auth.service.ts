@@ -9,15 +9,20 @@ import { CreateUserDTO } from './dto/CreateUserDto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
+import { OAuth2Client } from 'google-auth-library';
 import argon2 from 'argon2';
 
 @Injectable()
 export class AuthService {
+  private googleClient: OAuth2Client;
+
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) {
+    this.googleClient = new OAuth2Client();
+  }
 
   async loginUser(loginDto: LoginDto) {
     const { email, password } = loginDto;
@@ -78,5 +83,51 @@ export class AuthService {
 
   async getUserById(userId: number) {
     return this.userRepository.findOneBy({ id: userId });
+  }
+
+  async loginGoogleUser(googleCred: string) {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: googleCred,
+      audience: process.env.CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload?.email || !payload.email_verified) {
+      throw new UnauthorizedException({ message: 'Google email not found' });
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { googleSub: payload.sub },
+    });
+
+    if (user) {
+      const accessToken = await this.jwtService.signAsync({
+        userId: user.id,
+      });
+
+      return {
+        token: accessToken,
+        userInfo: { email: user.email, name: user.name },
+      };
+    }
+
+    const newUser = this.userRepository.create({
+      name: payload.name,
+      passwordHash: 'empty',
+      email: payload.email,
+      googleSub: payload.sub,
+    });
+
+    await this.userRepository.save(newUser);
+
+    const accessToken = await this.jwtService.signAsync({
+      userId: newUser.id,
+    });
+
+    return {
+      token: accessToken,
+      userInfo: { email: newUser.email, name: newUser.name },
+    };
   }
 }

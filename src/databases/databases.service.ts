@@ -167,6 +167,12 @@ export class DatabasesService {
       where: { userId, databaseId },
     });
 
+    if (!user) {
+      throw new ForbiddenException({
+        message: 'You are not a paticipant of this database',
+      });
+    }
+
     return { role: user.role };
   }
 

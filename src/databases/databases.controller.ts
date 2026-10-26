@@ -33,7 +33,11 @@ export class DatabasesController {
   }
 
   @Get('/:id/users')
-  getUsersOfDatabase(@Param('id') dbId: number) {
+  async getUsersOfDatabase(
+    @Param('id') dbId: number,
+    @CurrentUserId() userId: number,
+  ) {
+    await this.databasesService.getRoleInDatabase(userId, dbId);
     return this.databasesService.getUsersOfDatabase(dbId);
   }
 
