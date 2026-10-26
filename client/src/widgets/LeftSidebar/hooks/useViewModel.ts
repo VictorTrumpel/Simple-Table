@@ -5,6 +5,7 @@ export const useViewModel = () => {
   const dispatch = useAppDispatch();
 
   const userName = useAppSelector((state) => state.userInfo.user?.name || "");
+  const avatarUrl = useAppSelector((state) => state.userInfo.user?.avatarUrl);
 
   const handleLogOut = () => {
     dispatch(userInfoActions.clearUserInfo());
@@ -12,5 +13,5 @@ export const useViewModel = () => {
     localStorage.removeItem("authToken");
   };
 
-  return { userName, handleLogOut };
+  return { userName, avatarUrl, handleLogOut };
 };

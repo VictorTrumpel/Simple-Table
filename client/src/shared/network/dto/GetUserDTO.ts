@@ -4,6 +4,7 @@ export type GetUserDTO = {
   userInfo: {
     name: string;
     email: string;
+    avatarUrl?: string | null;
     createdAt: string;
   };
 };

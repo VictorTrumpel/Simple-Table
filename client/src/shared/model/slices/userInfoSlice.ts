@@ -6,6 +6,7 @@ export type UserRole = 'constructor' | 'writer' | 'reader';
 export type UserInfo = {
   email: string;
   name: string;
+  avatarUrl?: string | null;
 };
 
 type State = {

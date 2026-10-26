@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
@@ -82,6 +83,14 @@ export class AuthService {
   }
 
   async getUserById(userId: number) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException({
+        message: `Unknown user with id: ${userId}`,
+      });
+    }
+
     return this.userRepository.findOneBy({ id: userId });
   }
 
@@ -108,7 +117,11 @@ export class AuthService {
 
       return {
         token: accessToken,
-        userInfo: { email: user.email, name: user.name },
+        userInfo: {
+          email: user.email,
+          name: user.name,
+          avatarUrl: payload.picture,
+        },
       };
     }
 
@@ -127,7 +140,11 @@ export class AuthService {
 
     return {
       token: accessToken,
-      userInfo: { email: newUser.email, name: newUser.name },
+      userInfo: {
+        email: newUser.email,
+        name: newUser.name,
+        avatarUrl: payload.picture,
+      },
     };
   }
 }

@@ -7,7 +7,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { mainVioletColor } from '@shared';
 
 export const LeftSidebar = (props: BoxProps) => {
-  const { userName, handleLogOut } = useViewModel();
+  const { userName, avatarUrl, handleLogOut } = useViewModel();
 
   return (
     <Box
@@ -23,10 +23,7 @@ export const LeftSidebar = (props: BoxProps) => {
       {...props}
     >
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <UserLogo
-          name={userName}
-          src="https://v6.mui.com/static/images/avatar/1.jpg"
-        />
+        <UserLogo name={userName} src={avatarUrl} />
 
         <IconButton size="small" onClick={handleLogOut}>
           <LogoutIcon fontSize="inherit" sx={{ color: mainVioletColor }} />
