@@ -4,9 +4,11 @@ import { useViewModel } from './hooks/useViewModel.js';
 import { useSnackbar } from 'notistack';
 import { useHistory } from 'react-router-dom';
 import { GoogleAuth } from '../../entity/GoogleAuth/index.js';
+import { YandexAuth } from '../../entity/YandexAuth/index.js';
 
 export const LogInForm = () => {
-  const { authUserByData, googleLogin, setUserInfo } = useViewModel();
+  const { authUserByData, googleLogin, yandexLogin, setUserInfo } =
+    useViewModel();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -60,6 +62,29 @@ export const LogInForm = () => {
 
   const isValid = () => {
     return values.email && values.password;
+  };
+
+  const handleYandexLogin = async (accessToken: string) => {
+    console.log('accessToken :>> ', accessToken);
+    setIsLoading(true);
+    try {
+      const response = await yandexLogin(accessToken);
+
+      if (response.error) {
+        const errorData = response.error.response?.data as
+          { message?: unknown } | undefined;
+        const message =
+          typeof errorData?.message === 'string'
+            ? errorData.message
+            : 'Не удалось войти через Яндекс. Попробуйте ещё раз.';
+        enqueueSnackbar(message, { variant: 'error' });
+        return;
+      }
+
+      setUserInfo(response.data);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -125,7 +150,16 @@ export const LogInForm = () => {
 
         <Typography sx={{ display: 'flex' }}>или</Typography>
 
-        <GoogleAuth onSuccess={handleGoogleLogin} />
+        <Typography variant="body2" color="text.secondary">
+          Войти с помощью
+        </Typography>
+
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Box sx={{ pointerEvents: isLoading ? 'none' : 'auto' }}>
+            <GoogleAuth onSuccess={handleGoogleLogin} />
+          </Box>
+          <YandexAuth onSuccess={handleYandexLogin} disabled={isLoading} />
+        </Box>
 
         <Button
           fullWidth

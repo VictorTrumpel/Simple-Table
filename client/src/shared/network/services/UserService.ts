@@ -6,6 +6,18 @@ import type { Response } from '../shared/Response.js';
 import type { AxiosError } from 'axios';
 
 export class UserService {
+  async yandexLogin(accessToken: string): Promise<Response<GetUserDTO>> {
+    try {
+      const { data } = await network.post<GetUserDTO>('/auth/yandex/login', {
+        accessToken,
+      });
+
+      return { data: camelcaseKeys(data), error: null };
+    } catch (error) {
+      return { data: null, error: error as AxiosError };
+    }
+  }
+
   async googleLogin(googleCredential: string): Promise<Response<GetUserDTO>> {
     try {
       const { data } = await network.post<GetUserDTO>('/auth/google/login', {

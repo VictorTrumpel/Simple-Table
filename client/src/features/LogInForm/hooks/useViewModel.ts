@@ -14,11 +14,15 @@ export const useViewModel = () => {
     return await userService.googleLogin(credential);
   };
 
+  const yandexLogin = async (accessToken: string) => {
+    return await userService.yandexLogin(accessToken);
+  };
+
   const setUserInfo = (getUserDTO: GetUserDTO) => {
     localStorage.setItem('authToken', getUserDTO.token);
     network.defaults.headers.common.Authorization = `Bearer ${getUserDTO.token}`;
     dispatch(userInfoActions.setUserInfo(getUserDTO.userInfo));
   };
 
-  return { authUserByData, googleLogin, setUserInfo };
+  return { authUserByData, googleLogin, yandexLogin, setUserInfo };
 };

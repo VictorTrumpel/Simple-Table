@@ -31,6 +31,15 @@ export class User {
   })
   googleSub!: string;
 
+  @Column({
+    name: 'yandex_id',
+    type: 'text',
+    nullable: true,
+    unique: true,
+    select: false,
+  })
+  yandexId!: string | null;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamptz',

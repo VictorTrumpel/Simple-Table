@@ -5,6 +5,7 @@ import { CreateUserDTO } from './dto/CreateUserDto';
 import { Public } from './decorators/Public';
 import { CurrentUserId } from './decorators/CurrentUserId';
 import { AuthGoogleDto } from './dto/AuthGoogleDto';
+import { AuthYandexDto } from './dto/AuthYandexDto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,5 +32,11 @@ export class AuthController {
   @Public()
   async authGoogle(@Body() authGoogleDto: AuthGoogleDto) {
     return this.authService.loginGoogleUser(authGoogleDto.googleCredential);
+  }
+
+  @Public()
+  @Post('/yandex/login')
+  authYandex(@Body() authYandexDto: AuthYandexDto) {
+    return this.authService.loginYandexUser(authYandexDto.accessToken);
   }
 }

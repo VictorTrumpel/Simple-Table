@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { LoginDto } from './dto/LoginDto';
 import { CreateUserDTO } from './dto/CreateUserDto';
 import { JwtService } from '@nestjs/jwt';
@@ -12,6 +12,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { OAuth2Client } from 'google-auth-library';
 import argon2 from 'argon2';
+import { randomBytes } from 'node:crypto';
+import { YandexIdService } from './yandexid.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +23,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly yandexIdService: YandexIdService,
   ) {
     this.googleClient = new OAuth2Client();
   }
@@ -92,6 +95,53 @@ export class AuthService {
     }
 
     return this.userRepository.findOneBy({ id: userId });
+  }
+
+  async loginYandexUser(yandexAccessToken: string) {
+    const profile = await this.yandexIdService.getProfile(yandexAccessToken);
+
+    const possibleUser = await this.userRepository.findOneBy({
+      yandexId: profile.id,
+    });
+
+    if (!possibleUser) {
+      const existingUser = await this.userRepository.findOneBy({
+        email: profile.email,
+      });
+
+      if (existingUser) {
+        throw new ConflictException({ message: 'This user has already exist' });
+      }
+
+      const newUser = this.userRepository.create({
+        yandexId: profile.id,
+        email: profile.email,
+        name: profile.name,
+        passwordHash: await argon2.hash(randomBytes(32)),
+      });
+
+      await this.userRepository.save(newUser);
+
+      return {
+        token: await this.jwtService.signAsync({ userId: newUser.id }),
+        userInfo: {
+          email: newUser.email,
+          name: newUser.name,
+          avatarUrl: profile.avatarUrl,
+          createdAt: newUser.createdAt,
+        },
+      };
+    }
+
+    return {
+      token: await this.jwtService.signAsync({ userId: possibleUser.id }),
+      userInfo: {
+        email: possibleUser.email,
+        name: possibleUser.name,
+        avatarUrl: profile.avatarUrl,
+        createdAt: possibleUser.createdAt,
+      },
+    };
   }
 
   async loginGoogleUser(googleCred: string) {
