@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { LoginDto } from './dto/LoginDto';
 import { CreateUserDTO } from './dto/CreateUserDto';
 import { JwtService } from '@nestjs/jwt';
