@@ -113,7 +113,7 @@ export const LogInForm = () => {
         Simple Table
       </Typography>
 
-      <TextField
+      {/* <TextField
         value={values.email}
         onChange={handleUpdateLogin}
         size="small"
@@ -128,7 +128,7 @@ export const LogInForm = () => {
         fullWidth
         label="Пароль"
         type="password"
-      />
+      /> */}
 
       <Box
         width="100%"
@@ -138,7 +138,7 @@ export const LogInForm = () => {
         alignItems="center"
         gap={1}
       >
-        <Button
+        {/* <Button
           disabled={!isValid()}
           fullWidth
           loading={isLoading}
@@ -146,9 +146,9 @@ export const LogInForm = () => {
           variant="contained"
         >
           Войти
-        </Button>
+        </Button> */}
 
-        <Typography sx={{ display: 'flex' }}>или</Typography>
+        {/* <Typography sx={{ display: 'flex' }}>или</Typography> */}
 
         <Typography variant="body2" color="text.secondary">
           Войти с помощью
@@ -161,7 +161,7 @@ export const LogInForm = () => {
           <YandexAuth onSuccess={handleYandexLogin} disabled={isLoading} />
         </Box>
 
-        <Button
+        {/* <Button
           fullWidth
           loading={isLoading}
           type="button"
@@ -169,7 +169,7 @@ export const LogInForm = () => {
           onClick={handleGoToCreateAccaunt}
         >
           Создать аккаунт
-        </Button>
+        </Button> */}
       </Box>
     </Box>
   );
