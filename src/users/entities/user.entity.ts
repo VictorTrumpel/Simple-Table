@@ -40,6 +40,15 @@ export class User {
   })
   yandexId!: string | null;
 
+  @Column({
+    name: 'github_token',
+    type: 'text',
+    nullable: true,
+    unique: true,
+    select: false,
+  })
+  githubToken!: string | null;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamptz',

@@ -10,6 +10,10 @@ export const useViewModel = () => {
     return await userService.login(userDto);
   };
 
+  const githubLogin = async (code: string) => {
+    return await userService.githubLogin(code);
+  };
+
   const googleLogin = async (credential: string) => {
     return await userService.googleLogin(credential);
   };
@@ -24,5 +28,11 @@ export const useViewModel = () => {
     dispatch(userInfoActions.setUserInfo(getUserDTO.userInfo));
   };
 
-  return { authUserByData, googleLogin, yandexLogin, setUserInfo };
+  return {
+    authUserByData,
+    githubLogin,
+    googleLogin,
+    yandexLogin,
+    setUserInfo,
+  };
 };

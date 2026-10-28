@@ -6,6 +6,7 @@ import { Public } from './decorators/Public';
 import { CurrentUserId } from './decorators/CurrentUserId';
 import { AuthGoogleDto } from './dto/AuthGoogleDto';
 import { AuthYandexDto } from './dto/AuthYandexDto';
+import { AuthGithubDto } from './dto/AuthGithubDto';
 
 @Controller('auth')
 export class AuthController {
@@ -38,5 +39,11 @@ export class AuthController {
   @Post('/yandex/login')
   authYandex(@Body() authYandexDto: AuthYandexDto) {
     return this.authService.loginYandexUser(authYandexDto.accessToken);
+  }
+
+  @Public()
+  @Post('/github/login')
+  authGithub(@Body() authGithubDto: AuthGithubDto) {
+    return this.authService.loginGithubUser(authGithubDto.code);
   }
 }

@@ -5,9 +5,10 @@ import { useSnackbar } from 'notistack';
 import { useHistory } from 'react-router-dom';
 import { GoogleAuth } from '../../entity/GoogleAuth/index.js';
 import { YandexAuth } from '../../entity/YandexAuth/index.js';
+import { GithubAuth } from '../../entity/GithubAuth/index.js';
 
 export const LogInForm = () => {
-  const { authUserByData, googleLogin, yandexLogin, setUserInfo } =
+  const { authUserByData, githubLogin, googleLogin, yandexLogin, setUserInfo } =
     useViewModel();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -58,6 +59,24 @@ export const LogInForm = () => {
     }
 
     setUserInfo(response.data);
+  };
+
+  const handleGithubLogin = async (code: string) => {
+    setIsLoading(true);
+    try {
+      const response = await githubLogin(code);
+
+      if (response.error) {
+        enqueueSnackbar('Не удалось войти через GitHub. Попробуйте ещё раз.', {
+          variant: 'error',
+        });
+        return;
+      }
+
+      setUserInfo(response.data);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isValid = () => {
@@ -159,6 +178,7 @@ export const LogInForm = () => {
             <GoogleAuth onSuccess={handleGoogleLogin} />
           </Box>
           <YandexAuth onSuccess={handleYandexLogin} disabled={isLoading} />
+          <GithubAuth onSuccess={handleGithubLogin} disabled={isLoading} />
         </Box>
 
         {/* <Button

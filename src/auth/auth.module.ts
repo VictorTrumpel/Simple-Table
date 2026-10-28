@@ -8,6 +8,7 @@ import { AuthGuard } from './guards/AuthGuard';
 import { User } from '../users/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { YandexIdService } from './yandexid.service';
+import { GithubService } from './github.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { YandexIdService } from './yandexid.service';
   providers: [
     AuthService,
     YandexIdService,
+    GithubService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

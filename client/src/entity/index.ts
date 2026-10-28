@@ -1,6 +1,7 @@
 export * from './UserLogo/index.js';
 export * from './GoogleAuth/index.js';
 export * from './YandexAuth/index.js';
+export * from './GithubAuth/index.js';
 export * from './DBTreeItem/index.js';
 export * from './CreateTableButton/index.js';
 export * from './MenuTableWork/index.js';

@@ -18,6 +18,18 @@ export class UserService {
     }
   }
 
+  async githubLogin(code: string): Promise<Response<GetUserDTO>> {
+    try {
+      const { data } = await network.post<GetUserDTO>('/auth/github/login', {
+        code,
+      });
+
+      return { data: camelcaseKeys(data), error: null };
+    } catch (error) {
+      return { data: null, error: error as AxiosError };
+    }
+  }
+
   async googleLogin(googleCredential: string): Promise<Response<GetUserDTO>> {
     try {
       const { data } = await network.post<GetUserDTO>('/auth/google/login', {

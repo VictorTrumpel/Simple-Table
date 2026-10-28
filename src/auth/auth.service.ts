@@ -14,6 +14,7 @@ import { OAuth2Client } from 'google-auth-library';
 import argon2 from 'argon2';
 import { randomBytes } from 'node:crypto';
 import { YandexIdService } from './yandexid.service';
+import { GithubService } from './github.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly yandexIdService: YandexIdService,
+    private readonly githubService: GithubService,
   ) {
     this.googleClient = new OAuth2Client();
   }
@@ -140,6 +142,55 @@ export class AuthService {
         name: possibleUser.name,
         avatarUrl: profile.avatarUrl,
         createdAt: possibleUser.createdAt,
+      },
+    };
+  }
+
+  async loginGithubUser(code: string) {
+    const accessToken = await this.githubService.getAccessToken(code);
+
+    const existingUser = await this.userRepository.findOneBy({
+      githubToken: accessToken,
+    });
+
+    if (existingUser) {
+      return this.buildGithubLoginResponse(existingUser);
+    }
+
+    const profile = await this.githubService.getProfile(accessToken);
+
+    const userWithSameEmail = await this.userRepository.findOneBy({
+      email: profile.email,
+    });
+
+    if (userWithSameEmail) {
+      await this.userRepository.update(userWithSameEmail.id, {
+        githubToken: accessToken,
+      });
+
+      return this.buildGithubLoginResponse(userWithSameEmail);
+    }
+
+    const newUser = this.userRepository.create({
+      githubToken: accessToken,
+      email: profile.email,
+      name: profile.name,
+      passwordHash: await argon2.hash(randomBytes(32)),
+    });
+
+    await this.userRepository.save(newUser);
+
+    return this.buildGithubLoginResponse(newUser);
+  }
+
+  private async buildGithubLoginResponse(user: User) {
+    return {
+      token: await this.jwtService.signAsync({ userId: user.id }),
+      userInfo: {
+        email: user.email,
+        name: user.name,
+        avatarUrl: '',
+        createdAt: user.createdAt,
       },
     };
   }
