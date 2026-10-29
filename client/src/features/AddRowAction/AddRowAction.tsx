@@ -5,6 +5,7 @@ import {
   DialogContent,
   TextField,
   Box,
+  MenuItem,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
@@ -91,17 +92,32 @@ export const AddRowAction = ({ tableId, columns }: AddRowActionProps) => {
             >
               {columns.map((col) => {
                 const colId = col.id;
+                const isEnum = col.type === 'enum';
 
                 const value = values[colId];
 
                 return (
                   <TextField
-                    value={value}
+                    value={value ?? ''}
                     size="small"
                     key={col.id}
                     label={col.name}
+                    select={isEnum}
+                    required={isEnum}
+                    helperText={
+                      isEnum && !col.enum?.length
+                        ? 'Для столбца не заданы варианты'
+                        : undefined
+                    }
                     onChange={(e) => handleUpdateValue(colId, e.target.value)}
-                  />
+                  >
+                    {isEnum &&
+                      col.enum?.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                  </TextField>
                 );
               })}
             </Box>
@@ -115,9 +131,9 @@ export const AddRowAction = ({ tableId, columns }: AddRowActionProps) => {
               </Button>
 
               <Button
+                type="submit"
                 variant="contained"
                 loading={isAddProccessing}
-                onClick={handleSubmitForm}
               >
                 Добавить
               </Button>

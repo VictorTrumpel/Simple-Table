@@ -6,12 +6,16 @@ export const useTableGrid = (tableInfo: GetTableDataDTO | null) => {
   const gridColumns: GridColDef[] = useMemo(() => {
     if (!tableInfo) return [];
 
-    const columns = tableInfo.table.columns.map((col) => {
+    const columns = tableInfo.table.columns.map<GridColDef>((col) => {
       return {
         field: col.id,
         headerName: col.name,
         editable: true,
         width: 150,
+        ...(col.type === "enum" && {
+          type: "singleSelect",
+          valueOptions: col.enum ?? [],
+        }),
       };
     });
 
