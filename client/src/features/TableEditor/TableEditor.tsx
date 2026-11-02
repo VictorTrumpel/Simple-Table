@@ -87,6 +87,13 @@ export const TableEditor = ({
     cellElem.onblur = () => {
       handleCellFree(tableId, String(cell.id), cell.field);
     };
+
+    if (cell.isEditable && cell.cellMode === 'view') {
+      cell.api.startCellEditMode({
+        id: cell.id,
+        field: cell.field,
+      });
+    }
   };
 
   const handleDeleteRows = async () => {

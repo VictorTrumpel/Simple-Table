@@ -228,6 +228,7 @@ export class ChangelogService {
       /*sql*/ `
       SELECT * FROM changelog
       WHERE target != 'cell' AND table_id = $1 AND target != 'database'
+      ORDER BY changed_at;
     `,
       [tableId],
     );
@@ -255,6 +256,7 @@ export class ChangelogService {
       /*sql*/ `
       SELECT * FROM changelog
       WHERE target = 'cell' AND table_id = $1 AND row_id = $2 AND column_id = $3
+      ORDER BY changed_at;
     `,
       [tableId, rowId, columnId],
     );
