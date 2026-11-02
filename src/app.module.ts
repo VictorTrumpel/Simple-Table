@@ -7,6 +7,7 @@ import { TablesModule } from './tables/tables.module';
 import { ChangelogModule } from './changelog/changelog.module';
 import { UsersModule } from './users/users.module';
 import { ChartsModule } from './charts/charts.module';
+import { HealthcheckModule } from './healthcheck/healthcheck.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ChartsModule } from './charts/charts.module';
     ChangelogModule,
     UsersModule,
     ChartsModule,
+    HealthcheckModule,
   ],
 })
 export class AppModule {}
