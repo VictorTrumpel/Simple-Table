@@ -8,6 +8,10 @@ import { WsAdapter } from '@nestjs/platform-ws';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: 'https://app.simple-table.tech',
+  });
+
   app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
 
   const logger = new Logger('HTTP');
