@@ -1,24 +1,18 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { NextFunction, Request } from 'express';
-import { ValidationPipe } from '@nestjs/common';
 import { WsAdapter } from '@nestjs/platform-ws';
+import { httpLoggingMiddleware } from './logging/http-logging.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
+  app.use(httpLoggingMiddleware);
+
   app.enableCors({
     origin: 'https://app.simple-table.tech',
-  });
-
-  app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
-
-  const logger = new Logger('HTTP');
-
-  app.use((req: Request, _: unknown, next: NextFunction) => {
-    logger.log(`${req.method} ${req.originalUrl}`);
-    next();
+    exposedHeaders: ['X-Request-Id'],
   });
 
   app.useGlobalPipes(
@@ -32,4 +26,10 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 
-bootstrap().catch(console.error);
+bootstrap().catch((error: unknown) => {
+  new Logger('Bootstrap').error(
+    'Application bootstrap failed',
+    error instanceof Error ? error.stack : String(error),
+  );
+  process.exitCode = 1;
+});

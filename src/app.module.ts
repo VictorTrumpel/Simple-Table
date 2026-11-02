@@ -8,6 +8,8 @@ import { ChangelogModule } from './changelog/changelog.module';
 import { UsersModule } from './users/users.module';
 import { ChartsModule } from './charts/charts.module';
 import { HealthcheckModule } from './healthcheck/healthcheck.module';
+import { APP_FILTER } from '@nestjs/core';
+import { HttpExceptionLoggingFilter } from './logging/http-exception-logging.filter';
 
 @Module({
   imports: [
@@ -36,6 +38,12 @@ import { HealthcheckModule } from './healthcheck/healthcheck.module';
     UsersModule,
     ChartsModule,
     HealthcheckModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionLoggingFilter,
+    },
   ],
 })
 export class AppModule {}
