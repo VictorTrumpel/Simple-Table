@@ -14,6 +14,12 @@ export function httpLoggingMiddleware(
   const context = { requestId, method: req.method, path: req.path };
 
   res.setHeader('X-Request-Id', requestId);
+
+  if (/^\/healthcheck\/?$/i.test(req.path)) {
+    next();
+    return;
+  }
+
   logger.log({ event: 'request_started', ...context });
 
   const logResult = (aborted: boolean): void => {
