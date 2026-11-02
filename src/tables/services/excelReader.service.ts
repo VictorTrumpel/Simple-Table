@@ -1,10 +1,15 @@
 import { Injectable, StreamableFile } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
 import * as XLSX from 'xlsx';
 import { DynTableRepository } from '../repository/dynTable.repository';
+import { findTableOrTrhow } from '../utils/findTableOrTrhow';
 
 @Injectable()
 export class ExcleReaderService {
-  constructor(private dynTableRepository: DynTableRepository) {}
+  constructor(
+    private dynTableRepository: DynTableRepository,
+    private readonly entityManager: EntityManager,
+  ) {}
 
   readFileData(file: Express.Multer.File) {
     const workbook = XLSX.read(file.buffer, {
@@ -22,29 +27,37 @@ export class ExcleReaderService {
   }
 
   async getStreamableBufferForExcel(tableId: string): Promise<StreamableFile> {
+    const tableMeta = await findTableOrTrhow(
+      tableId,
+      this.entityManager,
+      false,
+    );
+
+    const colIdToName = new Map(
+      tableMeta.columns.map((column) => [column.id, column.name]),
+    );
+
     const tableData = await this.dynTableRepository.readTable(tableId, {
       page: 1,
       perPage: 100_000,
     });
 
-    const filterSystemColsTableData = tableData.map((row) => {
-      const rowWithoutSystemCols = Object.entries(row).reduce(
-        (currentRow, colKeyValutTupple) => {
-          const [colKey, colValue] = colKeyValutTupple;
+    const rowsWithColumnNames = tableData.map((row) =>
+      Object.entries(row).reduce(
+        (currentRow, [colId, colValue]) => {
+          const colName = colIdToName.get(colId);
 
-          if (!colKey.startsWith('c_')) return currentRow;
+          if (colName === undefined) return currentRow;
 
-          currentRow[colKey] = colValue;
+          currentRow[colName] = colValue;
 
           return currentRow;
         },
         {} as Record<string, unknown>,
-      );
+      ),
+    );
 
-      return rowWithoutSystemCols;
-    });
-
-    const sheet = XLSX.utils.json_to_sheet(filterSystemColsTableData);
+    const sheet = XLSX.utils.json_to_sheet(rowsWithColumnNames);
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, sheet, 'Данные');
