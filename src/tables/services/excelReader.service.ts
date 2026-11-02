@@ -27,7 +27,24 @@ export class ExcleReaderService {
       perPage: 100_000,
     });
 
-    const sheet = XLSX.utils.json_to_sheet(tableData);
+    const filterSystemColsTableData = tableData.map((row) => {
+      const rowWithoutSystemCols = Object.entries(row).reduce(
+        (currentRow, colKeyValutTupple) => {
+          const [colKey, colValue] = colKeyValutTupple;
+
+          if (!colKey.startsWith('c_')) return currentRow;
+
+          currentRow[colKey] = colValue;
+
+          return currentRow;
+        },
+        {} as Record<string, unknown>,
+      );
+
+      return rowWithoutSystemCols;
+    });
+
+    const sheet = XLSX.utils.json_to_sheet(filterSystemColsTableData);
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, sheet, 'Данные');
