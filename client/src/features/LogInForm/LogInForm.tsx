@@ -1,8 +1,7 @@
-import { useState, type ChangeEvent } from 'react';
-import { Box, TextField, Typography, Button } from '@mui/material';
+import { useState } from 'react';
+import { Box, Typography } from '@mui/material';
 import { useViewModel } from './hooks/useViewModel.js';
 import { useSnackbar } from 'notistack';
-import { useHistory } from 'react-router-dom';
 import { GoogleAuth } from '../../entity/GoogleAuth/index.js';
 import { YandexAuth } from '../../entity/YandexAuth/index.js';
 import { GithubAuth } from '../../entity/GithubAuth/index.js';
@@ -13,21 +12,11 @@ export const LogInForm = () => {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const history = useHistory();
-
   const [isLoading, setIsLoading] = useState(false);
-  const [values, setValues] = useState<{ email: string; password: string }>({
+  const [values] = useState<{ email: string; password: string }>({
     email: '',
     password: '',
   });
-
-  const handleUpdateLogin = (e: ChangeEvent<HTMLInputElement>) => {
-    setValues({ ...values, email: e.target.value });
-  };
-
-  const handleUpdatePassword = (e: ChangeEvent<HTMLInputElement>) => {
-    setValues({ ...values, password: e.target.value });
-  };
 
   const handleSubmitForm = async () => {
     setIsLoading(true);
@@ -40,10 +29,6 @@ export const LogInForm = () => {
     }
 
     setUserInfo(response.data);
-  };
-
-  const handleGoToCreateAccaunt = () => {
-    history.push('/registration');
   };
 
   const handleGoogleLogin = async (credential: string) => {
@@ -77,10 +62,6 @@ export const LogInForm = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const isValid = () => {
-    return values.email && values.password;
   };
 
   const handleYandexLogin = async (accessToken: string) => {
